@@ -1,0 +1,54 @@
+<main class="flex justify-center items-center h-100vh relative bg-[#0E0A0E]">
+    <div class="absolute top-2.5 left-2.5">
+        <div class="text-[#BABABA] flex items-center">
+            <span class="mr-2 flex items-center">
+                {{{WeatherData.Icon}}}
+            </span>
+            <div class="font-semibold">
+                <p>{{WeatherData.Temp}}°C</p>
+                <p>{{WeatherData.Desc}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="flex flex-col items-center w-full mx-6">
+        <div class="flex items-center pb-2.5">
+            <svg class="mr-3" width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12.1483" y="24.7693" width="70" height="47" rx="12" transform="rotate(14.63 12.1483 24.7693)" fill="url(#paint0_linear_20_10)"/><path fill-rule="evenodd" clip-rule="evenodd" d="M52.7386 13.4812C46.8869 10.3698 39.6209 12.5913 36.5096 18.4429L32.7819 25.4537L68.4322 34.7599C77.5166 37.1313 82.9586 46.418 80.5872 55.5025L74.7779 77.7567C74.7752 77.7674 74.7724 77.778 74.7696 77.7886C79.7728 78.7022 85.0029 76.3441 87.518 71.6138L98.3159 51.306C101.427 45.4543 99.2058 38.1883 93.3542 35.0769L52.7386 13.4812Z" fill="url(#paint1_linear_20_10)"/><defs><linearGradient id="paint0_linear_20_10" x1="12.359" y1="44.8681" x2="82.491" y2="48.2607" gradientUnits="userSpaceOnUse"><stop stop-color="#F0389B"/><stop offset="1" stop-color="#EEE740"/></linearGradient><linearGradient id="paint1_linear_20_10" x1="33.8935" y1="25.6926" x2="94.2236" y2="61.6131" gradientUnits="userSpaceOnUse"><stop stop-color="#AA38F0"/><stop offset="1" stop-color="#EE406A"/></linearGradient></defs></svg>
+            <h1>Passport</h1>
+        </div>
+        <input id="search-input" class="w-full max-w-3xl bg-[#1C1C21] border border-[rgb(86,86,91)/30] rounded-full px-3 py-1 text-white h-7" placeholder="Search..." />
+    </div>
+</main>
+<section class="flex justify-center w-full">
+    <div class="w-full sm:w-8/10 p-2.5">
+        {{#each Categories}}
+            <div class="flex items-center w-fit">
+                <img class="object-contain mr-2 select-none" width="32" height="32" draggable="false" src="{{this.Icon}}" />
+                <h2 class="capitalize w-fit">{{this.Name}}</h2>
+            </div>
+            <div class="p-2.5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                {{#each this.Links}}
+                    <a href="{{this.URL}}" class="underline-none text-unset" draggable="false" target="_blank" rel="noopener noreferrer">
+                        <div class="rounded-2xl bg-[#211F23] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1">
+                            <img class="object-contain mr-2 select-none rounded-md" width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
+                            <div>
+                                <h3>{{this.Name}}</h3>
+                                <p class="text-[#D7D7D7]">{{this.Description}}</p>
+                            </div>
+                        </div>
+                    </a>
+                {{/each}}
+            </div>
+        {{/each}}
+    </div>
+</section>
+
+<script>
+    let search_input = document.getElementById("search-input");
+    let search_provider = "{{ SearchProvider }}";
+    // on enter key press
+    search_input.addEventListener("keyup", function (event) {
+        if (event.key === "Enter") {
+            window.location.href = search_provider.replace("%s", search_input.value);
+        }
+    });
+</script>

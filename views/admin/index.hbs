@@ -1,0 +1,175 @@
+<section class="flex justify-center w-full">
+    <div class="w-full sm:w-8/10 p-2.5">
+        {{#each Categories}}
+            <div class="flex items-center">
+                <img class="object-contain mr-2 select-none" width="32" height="32" draggable="false" src="{{this.Icon}}" />
+                <h2 class="capitalize">{{this.Name}}</h2>
+                <button onclick="deleteCategory({{this.ID}})" class="w-fit h-fit flex p-0.5 bg-[#1C1C21] border-solid border-[#211F23] rounded-md hover:bg-[#29292e] cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
+            </div>
+            <div class="p-2.5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                {{#each this.Links}}
+                    <div class="rounded-2xl bg-[#211F23] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform] ease-[cubic-bezier(0.16,1,0.3,1)] relative">
+                        <img class="object-contain mr-2 select-none rounded-md" width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
+                        <div>
+                            <h3>{{this.Name}}</h3>
+                            <p class="text-[#D7D7D7]">{{this.Description}}</p>
+                        </div>
+                        <button onclick="deleteLink({{this.ID}})" class="w-fit h-fit flex p-0.5 bg-[#1C1C21] border-solid border-[#211F23] rounded-md hover:bg-[#29292e] cursor-pointer absolute right-1 top-1"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
+                    </div>
+                {{/each}}
+                <div id="link-add" onclick="addLink({{this.ID}})" class="rounded-2xl border border-dashed border-[#656565] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-cursor select-none cursor-pointer">
+                    <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m-7-7h14"/></svg>
+                    <div>
+                        <h3>Add a link</h3>
+                    </div>
+                </div>
+            </div>
+        {{/each}}
+        <div class="flex items-center">
+            <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m-7-7h14"/></svg>
+            <h2 id="add-category" class="text-[#656565] underline decoration-dashed cursor-pointer">Add a new category</h2>
+        </div>
+    </div>
+</section>
+<div id="linkModal" class="hidden absolute top-0 left-0 bottom-0 right-0 bg-[#00000070] justify-center items-center">
+    <div class="bg-[#151316] rounded-xl overflow-hidden w-fit p-4">
+        <h3>Add A link</h3>
+        <form id="link-form" action="/api/links" method="post" class="flex flex-col gap-y-3 my-2">
+            <div>
+                <label for="linkName">Name</label>
+                <input class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[rgb(86,86,91)/30] text-white" type="text" name="name" placeholder="Name" id="linkName" />
+            </div>
+            <div>
+                <label for="linkDesc">Description</label>
+                <input class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[rgb(86,86,91)/30] text-white" type="text" name="description" placeholder="Description" id="linkDesc" />
+            </div>
+            <div>
+                <label for="linkURL">URL</label>
+                <input class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[rgb(86,86,91)/30] text-white" type="text" name="url" placeholder="URL" id="linkURL" />
+            </div>
+            <div>
+                <label for="linkIcon">Icon</label>
+                <input class="w-full text-white" type="file" name="icon" id="linkIcon" accept="image/*" />
+            </div>
+            <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Add</button>
+        </form>
+        <span id="link-message"></span>
+    </div>
+</div>
+<div id="categoryModal" class="hidden absolute top-0 left-0 bottom-0 right-0 bg-[#00000070] justify-center items-center">
+    <div class="bg-[#151316] rounded-xl overflow-hidden w-fit p-4">
+        <h3>Create A category</h3>
+        <form id="category-form" action="/api/categories" method="post" class="flex flex-col gap-y-3 my-2">
+            <div>
+                <label for="categoryName">Name</label>
+                <input class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[rgb(86,86,91)/30] text-white" type="text" name="name" placeholder="Name" id="categoryName" />
+            </div>
+            <div>
+                <label for="linkIcon">Icon</label>
+                <input class="w-full text-white" type="file" name="icon" id="linkIcon" accept=".svg" />
+            </div>
+            <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Create</button>
+        </form>
+        <span id="category-message"></span>
+    </div>
+</div>
+
+<script>
+    // idfk what this variable capitalization is, it's a mess
+    let linkAdd = document.getElementById("link-add");
+    let linkModal = document.getElementById("linkModal");
+    let categoryModal = document.getElementById("categoryModal");
+    let categoryAdd = document.getElementById("add-category");
+    let targetCategoryID = null;
+
+    function refresh() {
+        window.location.href = "/admin";
+    }
+
+    categoryAdd.addEventListener("click", () => {
+        categoryModal.classList.remove("hidden");
+        categoryModal.classList.add("flex");
+    });
+
+    function addLink(categoryID) {
+        targetCategoryID = categoryID;
+        linkModal.classList.remove("hidden");
+        linkModal.classList.add("flex");
+    }
+
+    async function deleteLink(linkID) {
+        let res = await fetch(`/api/links/${linkID}`, {
+            method: "DELETE"
+        });
+
+        if (res.status === 200) {
+            refresh();
+        }
+    }
+
+    async function deleteCategory(categoryID) {
+        let res = await fetch(`/api/categories/${categoryID}`, {
+            method: "DELETE"
+        });
+
+        if (res.status === 200) {
+            refresh();
+        }
+    }
+
+    document.getElementById("link-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        let data = new FormData(event.target);
+
+        data.append("category_id", targetCategoryID);
+
+        let res = await fetch(`/api/links`, {
+            method: "POST",
+            body: data
+        });
+
+        if (res.status === 201) {
+            linkModal.classList.add("hidden");
+            linkModal.classList.remove("flex");
+            refresh();
+        } else {
+            let json = await res.json();
+            document.getElementById("category-message").innerText = json.message;
+        }
+    });
+
+    document.getElementById("category-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        let data = new FormData(event.target);
+
+        let res = await fetch(`/api/categories`, {
+            method: "POST",
+            body: data
+        });
+
+        if (res.status === 201) {
+            categoryModal.classList.add("hidden");
+            categoryModal.classList.remove("flex");
+            refresh();
+        } else {
+            let json = await res.json();
+            document.getElementById("link-message").innerText = json.message;
+        }
+    });
+
+    linkModal.addEventListener("click", (event) => {
+        if (event.target === linkModal) {
+            targetCategoryID = null;
+            linkModal.classList.add("hidden");
+            linkModal.classList.remove("flex");
+        }
+    });
+
+    categoryModal.addEventListener("click", (event) => {
+        if (event.target === categoryModal) {
+            targetCategoryID = null;
+            categoryModal.classList.add("hidden");
+            categoryModal.classList.remove("flex");
+        }
+    });
+</script>

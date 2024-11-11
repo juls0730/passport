@@ -1,0 +1,45 @@
+<main class="flex justify-center items-center h-100vh relative bg-[#0E0A0E]">
+    <div class="flex bg-[#151316] rounded-xl overflow-hidden">
+        <img src="/leaves.jpg" class="h-96 w-64 object-cover" />
+        <div class="flex flex-col p-4 text-center">
+            <h2 class="text-2xl">
+                Login
+            </h2>
+            <form action="/admin/login" method="post" class="flex flex-col gap-y-3 my-2">
+                <input class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[rgb(86,86,91)/30] text-white" type="text" name="username" placeholder="Username" />
+                <input class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[rgb(86,86,91)/30] text-white" type="password" name="password" placeholder="Password" />
+                <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Login</button>
+            </form>
+            <span id="message"></span>
+        </div>
+    </div>
+</main>
+
+<script>
+    let message = document.getElementById("message");
+    let form = document.querySelector("form");
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        let data = {
+            "username": form.username.value,
+            "password": form.password.value
+        };
+
+        console.log(data);
+
+        let res = await fetch("/admin/login", {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (res.status === 200) {
+            window.location.href = "/admin";
+            return;
+        }
+
+        message.innerText = (await res.json()).message;
+    });
+</script>
