@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -223,6 +224,63 @@ type CreateLinkRequest struct {
 	CategoryID  int64                 `form:"category_id"`
 }
 
+func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fiber.Ctx) (string, error) {
+	srcFile, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer srcFile.Close()
+
+	var img image.Image
+	switch contentType {
+	case "image/jpeg":
+		img, err = jpeg.Decode(srcFile)
+	case "image/png":
+		img, err = png.Decode(srcFile)
+	case "image/webp":
+		img, err = webp.Decode(srcFile)
+	case "image/svg+xml":
+	default:
+		return "", errors.New("unsupported file type")
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	assetsDir := "public/uploads"
+
+	iconPath := filepath.Join(assetsDir, fileName)
+
+	if contentType == "image/svg+xml" {
+		if err = c.SaveFile(file, iconPath); err != nil {
+			return "", err
+		}
+	} else {
+		outFile, err := os.Create(iconPath)
+		if err != nil {
+			return "", err
+		}
+		defer outFile.Close()
+
+		resizedImg := resize.Resize(64, 0, img, resize.MitchellNetravali)
+
+		var buf bytes.Buffer
+		options := &webp.Options{Lossless: true, Quality: 80}
+		if err := webp.Encode(&buf, resizedImg, options); err != nil {
+			return "", err
+		}
+
+		if _, err := io.Copy(outFile, &buf); err != nil {
+			return "", err
+		}
+	}
+
+	iconPath = "/uploads/" + fileName
+
+	return iconPath, nil
+}
+
 func CreateLink(db *sql.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		var req CreateLinkRequest
@@ -258,61 +316,18 @@ func CreateLink(db *sql.DB) fiber.Handler {
 			})
 		}
 
-		srcFile, err := file.Open()
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to open file",
-			})
-		}
-		defer srcFile.Close()
-
-		// Decode the image
-		var img image.Image
-		switch contentType {
-		case "image/jpeg":
-			img, err = jpeg.Decode(srcFile)
-		case "image/png":
-			img, err = png.Decode(srcFile)
-		default:
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Unsupported image format",
-			})
-		}
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to decode image",
-			})
-		}
-
-		resizedImg := resize.Resize(64, 0, img, resize.Lanczos3)
-
-		var buf bytes.Buffer
-		options := &webp.Options{Lossless: false, Quality: 80}
-		if err := webp.Encode(&buf, resizedImg, options); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to encode image as WebP",
-			})
-		}
-
-		assetsDir := "public/uploads"
-
 		filename := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
-		iconPath := filepath.Join(assetsDir, filename)
 
-		outFile, err := os.Create(iconPath)
+		if contentType == "image/svg+xml" {
+			filename = fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
+		}
+
+		iconPath, err := UploadFile(file, filename, contentType, c)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to save file",
+				"message": "Failed to upload file, please try again!",
 			})
 		}
-		defer outFile.Close()
-		if _, err := io.Copy(outFile, &buf); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to save file",
-			})
-		}
-
-		iconPath = "/uploads/" + filename
 
 		link := Link{
 			Name:        req.Name,
@@ -374,24 +389,20 @@ func CreateCategory(db *sql.DB) fiber.Handler {
 		}
 
 		contentType := file.Header.Get("Content-Type")
-		if !strings.HasPrefix(contentType, "image/") {
+		if contentType != "image/svg+xml" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Only image files are allowed",
+				"message": "Only SVGs are supported for category icons!",
 			})
 		}
 
-		assetsDir := "public/uploads"
+		filename := fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
 
-		ext := filepath.Ext(file.Filename)
-		filename := fmt.Sprintf("%d_%s%s", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"), ext)
-		iconPath := filepath.Join(assetsDir, filename)
-
-		if err := c.SaveFile(file, iconPath); err != nil {
+		iconPath, err := UploadFile(file, filename, contentType, c)
+		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to save file",
+				"message": "Failed to upload file, please try again!",
 			})
 		}
-		iconPath = "/uploads/" + filename
 
 		category := Category{
 			Name:  req.Name,
@@ -576,23 +587,77 @@ func main() {
 
 		api.Delete("/links/:id", func(c fiber.Ctx) error {
 			id := c.Params("id")
+
+			var icon string
+			if err := app.db.QueryRow("SELECT icon FROM links WHERE id = ?", id).Scan(&icon); err != nil {
+				return err
+			}
+
 			_, err := app.db.Exec("DELETE FROM links WHERE id = ?", id)
 			if err != nil {
 				return err
+			}
+
+			if icon != "" {
+				if err := os.Remove(filepath.Join("public/", icon)); err != nil {
+					return err
+				}
 			}
 			return c.SendStatus(fiber.StatusOK)
 		})
 
 		api.Delete("/categories/:id", func(c fiber.Ctx) error {
 			id := c.Params("id")
-			_, err := app.db.Exec("DELETE FROM categories WHERE id = ?", id)
+
+			rows, err := app.db.Query(`
+				SELECT icon FROM categories WHERE id = ?
+				UNION
+				SELECT icon FROM links WHERE category_id = ?
+			`, id, id)
+
 			if err != nil {
 				return err
 			}
 
-			_, err = app.db.Exec("DELETE FROM links WHERE category_id = ?", id)
+			defer rows.Close()
+
+			var icons []string
+			for rows.Next() {
+				var icon string
+				if err := rows.Scan(&icon); err != nil {
+					return err
+				}
+				icons = append(icons, icon)
+			}
+
+			tx, err := app.db.Begin()
 			if err != nil {
 				return err
+			}
+			defer tx.Rollback()
+
+			_, err = tx.Exec("DELETE FROM categories WHERE id = ?", id)
+			if err != nil {
+				return err
+			}
+
+			_, err = tx.Exec("DELETE FROM links WHERE category_id = ?", id)
+			if err != nil {
+				return err
+			}
+
+			if err := tx.Commit(); err != nil {
+				return err
+			}
+
+			for _, icon := range icons {
+				if icon == "" {
+					continue
+				}
+
+				if err := os.Remove(filepath.Join("public/", icon)); err != nil {
+					return err
+				}
 			}
 
 			return c.SendStatus(fiber.StatusOK)
