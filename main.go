@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"embed"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"io/fs"
 	"log"
@@ -16,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/chai2010/webp"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/static"
 	"github.com/gofiber/template/handlebars/v2"
@@ -23,13 +28,14 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/juls0730/passport/middleware"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/nfnt/resize"
 )
 
 //go:embed views/**
 var viewsFS embed.FS
 
-//go:embed fonts/**
-var fontsFS embed.FS
+//go:embed assets/**
+var assetsFS embed.FS
 
 type Category struct {
 	ID    int64  `json:"id"`
@@ -252,13 +258,55 @@ func CreateLink(db *sql.DB) fiber.Handler {
 			})
 		}
 
+		srcFile, err := file.Open()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "Failed to open file",
+			})
+		}
+		defer srcFile.Close()
+
+		// Decode the image
+		var img image.Image
+		switch contentType {
+		case "image/jpeg":
+			img, err = jpeg.Decode(srcFile)
+		case "image/png":
+			img, err = png.Decode(srcFile)
+		default:
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Unsupported image format",
+			})
+		}
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "Failed to decode image",
+			})
+		}
+
+		resizedImg := resize.Resize(64, 0, img, resize.Lanczos3)
+
+		var buf bytes.Buffer
+		options := &webp.Options{Lossless: false, Quality: 80}
+		if err := webp.Encode(&buf, resizedImg, options); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "Failed to encode image as WebP",
+			})
+		}
+
 		assetsDir := "public/uploads"
 
-		ext := filepath.Ext(file.Filename)
-		filename := fmt.Sprintf("%d_%s%s", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"), ext)
+		filename := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
 		iconPath := filepath.Join(assetsDir, filename)
 
-		if err := c.SaveFile(file, iconPath); err != nil {
+		outFile, err := os.Create(iconPath)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "Failed to save file",
+			})
+		}
+		defer outFile.Close()
+		if _, err := io.Copy(outFile, &buf); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "Failed to save file",
 			})
@@ -417,10 +465,19 @@ func main() {
 		Views: engine,
 	})
 
-	router.Use("/", static.New("./public"))
+	router.Use("/", static.New("./public", static.Config{
+		Browse: false,
+		MaxAge: 31536000,
+	}))
 
-	router.Use("/fonts", static.New("", static.Config{
-		FS: fontsFS,
+	assetsDir, err := fs.Sub(assetsFS, "assets")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	router.Use("/assets", static.New("", static.Config{
+		FS:     assetsDir,
+		MaxAge: 31536000,
 	}))
 
 	router.Get("/", func(c fiber.Ctx) error {
@@ -442,11 +499,21 @@ func main() {
 		}, "layouts/main")
 	})
 
+	router.Use(middleware.AdminMiddleware(app.db))
+
 	router.Get("/admin/login", func(c fiber.Ctx) error {
+		if c.Locals("IsAdmin") != nil {
+			return c.Redirect().To("/admin")
+		}
+
 		return c.Render("admin/login", fiber.Map{}, "layouts/main")
 	})
 
 	router.Post("/admin/login", func(c fiber.Ctx) error {
+		if c.Locals("IsAdmin") != nil {
+			return c.Redirect().To("/admin")
+		}
+
 		var loginData struct {
 			Username string `json:"username"`
 			Password string `json:"password"`
@@ -480,9 +547,11 @@ func main() {
 		return c.Status(http.StatusOK).JSON(fiber.Map{"message": "Logged in successfully"})
 	})
 
-	router.Use(middleware.AdminMiddleware(app.db))
-
 	router.Get("/admin", func(c fiber.Ctx) error {
+		if c.Locals("IsAdmin") == nil {
+			return c.Redirect().To("/admin/login")
+		}
+
 		categories, err := app.GetCategories()
 		if err != nil {
 			return err
@@ -495,6 +564,13 @@ func main() {
 
 	api := router.Group("/api")
 	{
+		api.Use(func(c fiber.Ctx) error {
+			if c.Locals("IsAdmin") == nil {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
+			}
+			return c.Next()
+		})
+
 		api.Post("/categories", CreateCategory(app.db))
 		api.Post("/links", CreateLink(app.db))
 
