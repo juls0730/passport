@@ -6,7 +6,7 @@
                 <h2 class="capitalize">{{this.Name}}</h2>
                 <button onclick="deleteCategory({{this.ID}})" class="w-fit h-fit flex p-0.5 bg-[#1C1C21] border-solid border-[#211F23] rounded-md hover:bg-[#29292e] cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
             </div>
-            <div class="p-2.5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+            <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
                 {{#each this.Links}}
                     <div class="rounded-2xl bg-[#211F23] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform] ease-[cubic-bezier(0.16,1,0.3,1)] relative">
                         <img class="object-contain mr-2 select-none rounded-md" width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
