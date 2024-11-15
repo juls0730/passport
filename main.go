@@ -1,3 +1,5 @@
+//go:generate tailwindcss -i styles/main.css -o assets/tailwind.css --minify
+
 package main
 
 import (
@@ -470,7 +472,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	css, err := fs.ReadFile(assetsFS, "assets/tailwind.css")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	engine := handlebars.NewFileSystem(http.FS(viewsDir), ".hbs")
+	engine.AddFunc("inlineCSS", func() string {
+		return string(css)
+	})
 
 	router := fiber.New(fiber.Config{
 		Views: engine,

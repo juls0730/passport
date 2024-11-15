@@ -1,4 +1,4 @@
-<main class="flex justify-center items-center h-100vh relative bg-[#0E0A0E]">
+<main class="flex justify-center items-center h-screen relative bg-[#0E0A0E]">
     <div class="absolute top-2.5 left-2.5">
         <div class="text-[#BABABA] flex items-center">
             <span class="mr-2 flex items-center">
@@ -15,11 +15,11 @@
             <svg class="mr-3 aspect-square w-[clamp(48px,10vw,60px)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12.1483" y="24.7693" width="70" height="47" rx="12" transform="rotate(14.63 12.1483 24.7693)" fill="url(#paint0_linear_20_10)"/><path fill-rule="evenodd" clip-rule="evenodd" d="M52.7386 13.4812C46.8869 10.3698 39.6209 12.5913 36.5096 18.4429L32.7819 25.4537L68.4322 34.7599C77.5166 37.1313 82.9586 46.418 80.5872 55.5025L74.7779 77.7567C74.7752 77.7674 74.7724 77.778 74.7696 77.7886C79.7728 78.7022 85.0029 76.3441 87.518 71.6138L98.3159 51.306C101.427 45.4543 99.2058 38.1883 93.3542 35.0769L52.7386 13.4812Z" fill="url(#paint1_linear_20_10)"/><defs><linearGradient id="paint0_linear_20_10" x1="12.359" y1="44.8681" x2="82.491" y2="48.2607" gradientUnits="userSpaceOnUse"><stop stop-color="#F0389B"/><stop offset="1" stop-color="#EEE740"/></linearGradient><linearGradient id="paint1_linear_20_10" x1="33.8935" y1="25.6926" x2="94.2236" y2="61.6131" gradientUnits="userSpaceOnUse"><stop stop-color="#AA38F0"/><stop offset="1" stop-color="#EE406A"/></linearGradient></defs></svg>
             <h1>Passport</h1>
         </div>
-        <input id="search-input" class="w-full max-w-3xl bg-[#1C1C21] border border-[rgb(86,86,91)/30] rounded-full px-3 py-1 text-white h-7" placeholder="Search..." />
+        <input id="search-input" class="w-full max-w-3xl bg-[#1C1C21] border border-[#56565b]/30 rounded-full px-3 py-1 text-white h-7 focus-visible:outline-none placeholder:italic placeholder:text-[#434343]" placeholder="Search..." />
     </div>
 </main>
 <section class="flex justify-center w-full">
-    <div class="w-full sm:w-8/10 p-2.5">
+    <div class="w-full sm:w-4/5 p-2.5">
         {{#each Categories}}
             <div class="flex items-center w-fit">
                 <img class="object-contain mr-2 select-none" width="32" height="32" draggable="false" src="{{this.Icon}}" />
