@@ -8,6 +8,7 @@ Passport is a simple, fast, and lightweight web dashboard/new tab replacement.
 
 ### Prerequisites
 
+- [ZQDGR](https://github.com/juls0730/zqdgr)
 - [Go](https://go.dev/doc/install)
 - [sqlite3](https://www.sqlite.org/download.html)
 - [TailwdinCSS CLI](https://github.com/tailwindlabs/tailwindcss/releases/latest)

@@ -40,6 +40,28 @@ var viewsFS embed.FS
 //go:embed assets/**
 var assetsFS embed.FS
 
+var devContent string = `<script>
+let host = window.location.hostname;
+const socket = new WebSocket('ws://' + host + ':2067/ws'); 
+
+socket.addEventListener('message', (event) => {
+    if (event.data === 'refresh') {
+        async function testPage() {
+            try {
+            let res = await fetch(window.location.href)
+            } catch (error) {
+                console.error(error);
+                setTimeout(testPage, 300);
+                return;
+            }
+            window.location.reload();
+        }
+
+        testPage();
+    }
+});
+</script>`
+
 type Category struct {
 	ID    int64  `json:"id"`
 	Name  string `json:"name"`
@@ -481,6 +503,10 @@ func main() {
 	engine := handlebars.NewFileSystem(http.FS(viewsDir), ".hbs")
 	engine.AddFunc("inlineCSS", func() string {
 		return string(css)
+	})
+
+	engine.AddFunc("devContent", func() string {
+		return devContent
 	})
 
 	router := fiber.New(fiber.Config{
