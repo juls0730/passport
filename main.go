@@ -159,7 +159,9 @@ type OpenWeatherResponse struct {
 	} `json:"weather"`
 	Main struct {
 		Temp float64 `json:"temp"`
-	}
+	} `json:"main"`
+	Code    int    `json:"cod"`
+	Message string `json:"message"`
 }
 
 type WeatherData struct {
@@ -181,6 +183,11 @@ type WeatherCache struct {
 }
 
 func NewWeatherCache() *WeatherCache {
+	if os.Getenv("OPENWEATHER_API_KEY") == "" || os.Getenv("OPENWEATHER_LAT") == "" || os.Getenv("OPENWEATHER_LON") == "" {
+		log.Fatalln("OpenWeather API Key, and your latitude and longitude are required!")
+		return nil
+	}
+
 	updateInterval, err := strconv.Atoi(os.Getenv("OPENWEATHER_UPDATE_INTERVAL"))
 	if err != nil || updateInterval < 1 {
 		updateInterval = 15
@@ -249,6 +256,16 @@ func (c *WeatherCache) updateWeather() {
 	if err := json.Unmarshal(body, &weatherResp); err != nil {
 		fmt.Printf("Error parsing weather data: %v\n", err)
 		return
+	}
+
+	// if the request failed
+	if weatherResp.Code != 200 {
+		// if there is no pre-existing data in the cache
+		if c.data.WeatherText == "" {
+			log.Fatalf("Fetching the weather data failed!\n%s\n", weatherResp.Message)
+		} else {
+			return
+		}
 	}
 
 	c.mutex.Lock()
