@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -34,11 +35,8 @@ import (
 	"github.com/nfnt/resize"
 )
 
-//go:embed views/**
-var viewsFS embed.FS
-
-//go:embed assets/**
-var assetsFS embed.FS
+//go:embed assets/** views/** schema.sql
+var embeddedAssets embed.FS
 
 var devContent string = `<script>
 let host = window.location.hostname;
@@ -88,6 +86,13 @@ func NewApp(dbPath string) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	schema, err := embeddedAssets.ReadFile("schema.sql")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.Exec(string(schema))
 
 	return &App{
 		db:           db,
@@ -164,22 +169,36 @@ type WeatherData struct {
 }
 
 type WeatherCache struct {
-	data       *WeatherData
-	lastUpdate time.Time
-	mutex      sync.RWMutex
-	updateChan chan struct{}
-	apiKey     string
-	lat        string
-	lon        string
+	data           *WeatherData
+	lastUpdate     time.Time
+	mutex          sync.RWMutex
+	updateChan     chan struct{}
+	tempUnits      string
+	updateInterval int
+	apiKey         string
+	lat            string
+	lon            string
 }
 
 func NewWeatherCache() *WeatherCache {
+	updateInterval, err := strconv.Atoi(os.Getenv("OPENWEATHER_UPDATE_INTERVAL"))
+	if err != nil || updateInterval < 1 {
+		updateInterval = 15
+	}
+
+	units := os.Getenv("OPENWEATHER_TEMP_UNITS")
+	if units == "" {
+		units = "metric"
+	}
+
 	cache := &WeatherCache{
-		data:       &WeatherData{},
-		updateChan: make(chan struct{}),
-		apiKey:     os.Getenv("OPENWEATHER_API_KEY"),
-		lat:        os.Getenv("OPENWEATHER_LAT"),
-		lon:        os.Getenv("OPENWEATHER_LON"),
+		data:           &WeatherData{},
+		updateChan:     make(chan struct{}),
+		tempUnits:      units,
+		updateInterval: updateInterval,
+		apiKey:         os.Getenv("OPENWEATHER_API_KEY"),
+		lat:            os.Getenv("OPENWEATHER_LAT"),
+		lon:            os.Getenv("OPENWEATHER_LON"),
 	}
 
 	go cache.weatherWorker()
@@ -196,7 +215,7 @@ func (c *WeatherCache) GetWeather() WeatherData {
 }
 
 func (c *WeatherCache) weatherWorker() {
-	ticker := time.NewTicker(30 * time.Minute)
+	ticker := time.NewTicker(time.Duration(c.updateInterval) * time.Minute)
 	defer ticker.Stop()
 
 	for {
@@ -210,8 +229,8 @@ func (c *WeatherCache) weatherWorker() {
 }
 
 func (c *WeatherCache) updateWeather() {
-	url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=metric",
-		c.lat, c.lon, c.apiKey)
+	url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=%s",
+		c.lat, c.lon, c.apiKey, c.tempUnits)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -489,12 +508,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	viewsDir, err := fs.Sub(viewsFS, "views")
+	viewsDir, err := fs.Sub(embeddedAssets, "views")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	css, err := fs.ReadFile(assetsFS, "assets/tailwind.css")
+	assetsDir, err := fs.Sub(embeddedAssets, "assets")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	css, err := fs.ReadFile(embeddedAssets, "assets/tailwind.css")
 
 	if err != nil {
 		log.Fatal(err)
@@ -517,11 +541,6 @@ func main() {
 		Browse: false,
 		MaxAge: 31536000,
 	}))
-
-	assetsDir, err := fs.Sub(assetsFS, "assets")
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	router.Use("/assets", static.New("", static.Config{
 		FS:     assetsDir,
