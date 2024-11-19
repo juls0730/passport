@@ -23,10 +23,9 @@ Passport is a simple, fast, and lightweight web dashboard/new tab replacement.
    - The `OPENWEATHER_LAT` and `OPENWEATHER_LON` are required for the weather data to be displayed
    - The `PASSPORT_ADMIN_USERNAME` and `PASSPORT_ADMIN_PASSWORD` are required for the admin dashboard
    - The `PASSPORT_SEARCH_PROVIDER` is the search provider used for the search bar, %s is replaced with the search query
-3. Run `sqlite3 passport.db < passport.sql` to create the database
-4. Run `go build` to build the project
-5. Deploy passport, passport.db and .env, and preferably the public folder (but you dont have to) to your web server
-6. profit
+3. Run `go build` to build the project
+4. Deploy `passport` to your web server
+5. profit
 
 ### Adding links and categories
 
