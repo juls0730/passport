@@ -26,6 +26,7 @@ import (
 
 	"github.com/chai2010/webp"
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/helmet"
 	"github.com/gofiber/fiber/v3/middleware/static"
 	"github.com/gofiber/template/handlebars/v2"
 	"github.com/google/uuid"
@@ -35,7 +36,7 @@ import (
 	"github.com/nfnt/resize"
 )
 
-//go:embed assets/** views/** schema.sql
+//go:embed assets/** templates/** schema.sql
 var embeddedAssets embed.FS
 
 var devContent string = `<script>
@@ -547,7 +548,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	viewsDir, err := fs.Sub(embeddedAssets, "views")
+	templatesDir, err := fs.Sub(embeddedAssets, "templates")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -563,7 +564,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	engine := handlebars.NewFileSystem(http.FS(viewsDir), ".hbs")
+	engine := handlebars.NewFileSystem(http.FS(templatesDir), ".hbs")
+
 	engine.AddFunc("inlineCSS", func() string {
 		return string(css)
 	})
@@ -575,6 +577,8 @@ func main() {
 	router := fiber.New(fiber.Config{
 		Views: engine,
 	})
+
+	router.Use(helmet.New(helmet.ConfigDefault))
 
 	router.Use("/", static.New("./public", static.Config{
 		Browse: false,
@@ -594,7 +598,7 @@ func main() {
 
 		weather := app.WeatherCache.GetWeather()
 
-		return c.Render("index", fiber.Map{
+		return c.Render("views/index", fiber.Map{
 			"SearchProvider": os.Getenv("PASSPORT_SEARCH_PROVIDER"),
 			"WeatherData": fiber.Map{
 				"Temp": weather.Temperature,
@@ -612,7 +616,7 @@ func main() {
 			return c.Redirect().To("/admin")
 		}
 
-		return c.Render("admin/login", fiber.Map{}, "layouts/main")
+		return c.Render("views/admin/login", fiber.Map{}, "layouts/main")
 	})
 
 	router.Post("/admin/login", func(c fiber.Ctx) error {
@@ -663,7 +667,7 @@ func main() {
 			return err
 		}
 
-		return c.Render("admin/index", fiber.Map{
+		return c.Render("views/admin/index", fiber.Map{
 			"Categories": categories,
 		}, "layouts/main")
 	})

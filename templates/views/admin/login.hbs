@@ -1,4 +1,4 @@
-<main class="flex justify-center items-center h-100vh relative bg-[#0E0A0E]">
+<main class="flex justify-center items-center h-screen relative bg-[#0E0A0E]">
     <div class="flex bg-[#151316] rounded-xl overflow-hidden">
         <img src="/assets/leaves.webp" class="h-96 w-64 object-cover" />
         <div class="flex flex-col p-4 text-center">
@@ -6,9 +6,14 @@
                 Login
             </h2>
             <form action="/admin/login" method="post" class="flex flex-col gap-y-3 my-2">
-                <input class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[rgb(86,86,91)/30] text-white" type="text" name="username" placeholder="Username" />
-                <input class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[rgb(86,86,91)/30] text-white" type="password" name="password" placeholder="Password" />
-                <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Login</button>
+                <input
+                    class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[#56565b]/30 text-white focus-visible:outline-none"
+                    type="text" name="username" placeholder="Username" />
+                <input
+                    class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[#56565b]/30 text-white focus-visible:outline-none"
+                    type="password" name="password" placeholder="Password" />
+                <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0"
+                    type="submit">Login</button>
             </form>
             <span id="message"></span>
         </div>

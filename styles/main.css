@@ -6,10 +6,12 @@
   font-family: "Instrument Sans";
   src: url("/assets/fonts/InstrumentSans-VariableFont_wdth,wght.woff2")
     format("woff2");
+  font-display: swap;
 }
 
 html {
   line-height: normal;
+  color-scheme: dark;
 }
 
 h1,
