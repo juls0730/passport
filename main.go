@@ -543,7 +543,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	app, err := NewApp("passport.db")
+	app, err := NewApp("passport.db?cache=shared&mode=rwc&_journal_mode=WAL")
 	if err != nil {
 		log.Fatal(err)
 	}
