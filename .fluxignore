@@ -1,0 +1,4 @@
+.git
+public/uploads/
+passport
+passport.db*

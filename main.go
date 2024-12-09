@@ -39,7 +39,7 @@ import (
 //go:embed assets/** templates/** schema.sql
 var embeddedAssets embed.FS
 
-var devContent string = `<script>
+var devContent = `<script>
 let host = window.location.hostname;
 const socket = new WebSocket('ws://' + host + ':2067/ws'); 
 
@@ -571,7 +571,10 @@ func main() {
 	})
 
 	engine.AddFunc("devContent", func() string {
-		return devContent
+		if os.Getenv("PASSPORT_DEV_MODE") == "true" {
+			return devContent
+		}
+		return ""
 	})
 
 	router := fiber.New(fiber.Config{

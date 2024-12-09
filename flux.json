@@ -1,0 +1,6 @@
+{
+	"name": "passport",
+	"port": 3000,
+	"env_file": ".env",
+	"url": "passport.wildcardproject.com"
+}
