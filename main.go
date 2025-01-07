@@ -15,6 +15,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -61,25 +62,14 @@ socket.addEventListener('message', (event) => {
 });
 </script>`
 
-type Category struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Icon  string `json:"icon"`
-	Links []Link `json:"links"`
-}
-
-type Link struct {
-	ID          int64  `json:"id"`
-	CategoryID  int64  `json:"category_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Icon        string `json:"icon"`
-	URL         string `json:"url"`
-}
+var (
+	insertCategoryStmt *sql.Stmt
+	insertLinkStmt     *sql.Stmt
+)
 
 type App struct {
-	db *sql.DB
 	*WeatherCache
+	*CategoryManager
 }
 
 func NewApp(dbPath string) (*App, error) {
@@ -94,63 +84,19 @@ func NewApp(dbPath string) (*App, error) {
 	}
 
 	_, err = db.Exec(string(schema))
+	if err != nil {
+		return nil, err
+	}
+
+	categoryManager, err := NewCategoryManager(db)
+	if err != nil {
+		return nil, err
+	}
 
 	return &App{
-		db:           db,
-		WeatherCache: NewWeatherCache(),
+		WeatherCache:    NewWeatherCache(),
+		CategoryManager: categoryManager,
 	}, nil
-}
-
-func (app *App) GetCategories() ([]Category, error) {
-	rows, err := app.db.Query(`
-		SELECT id, name, icon
-		FROM categories 
-		ORDER BY id ASC
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var categories []Category
-	for rows.Next() {
-		var cat Category
-		if err := rows.Scan(&cat.ID, &cat.Name, &cat.Icon); err != nil {
-			return nil, err
-		}
-
-		links, err := app.GetLinksByCategory(cat.ID)
-		if err != nil {
-			return nil, err
-		}
-		cat.Links = links
-		categories = append(categories, cat)
-	}
-	return categories, nil
-}
-
-func (app *App) GetLinksByCategory(categoryID int64) ([]Link, error) {
-	rows, err := app.db.Query(`
-		SELECT id, category_id, name, description, icon, url 
-		FROM links 
-		WHERE category_id = ? 
-		ORDER BY id ASC
-	`, categoryID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var links []Link
-	for rows.Next() {
-		var link Link
-		if err := rows.Scan(&link.ID, &link.CategoryID, &link.Name, &link.Description,
-			&link.Icon, &link.URL); err != nil {
-			return nil, err
-		}
-		links = append(links, link)
-	}
-	return links, nil
 }
 
 type OpenWeatherResponse struct {
@@ -277,14 +223,6 @@ func (c *WeatherCache) updateWeather() {
 	c.mutex.Unlock()
 }
 
-type CreateLinkRequest struct {
-	Name        string                `form:"name"`
-	Description string                `form:"description"`
-	URL         string                `form:"url"`
-	Icon        *multipart.FileHeader `form:"icon"`
-	CategoryID  int64                 `form:"category_id"`
-}
-
 func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fiber.Ctx) (string, error) {
 	srcFile, err := file.Open()
 	if err != nil {
@@ -342,151 +280,169 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 	return iconPath, nil
 }
 
-func CreateLink(db *sql.DB) fiber.Handler {
-	return func(c fiber.Ctx) error {
-		var req CreateLinkRequest
-		if err := c.Bind().MultipartForm(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Failed to parse request",
-			})
-		}
-
-		if req.Name == "" || req.URL == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Name and URL are required",
-			})
-		}
-
-		file, err := c.FormFile("icon")
-		if err != nil || file == nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Icon is required",
-			})
-		}
-
-		if file.Size > 5*1024*1024 {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "File size too large. Maximum size is 5MB",
-			})
-		}
-
-		contentType := file.Header.Get("Content-Type")
-		if !strings.HasPrefix(contentType, "image/") {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Only image files are allowed",
-			})
-		}
-
-		filename := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
-
-		if contentType == "image/svg+xml" {
-			filename = fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
-		}
-
-		iconPath, err := UploadFile(file, filename, contentType, c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to upload file, please try again!",
-			})
-		}
-
-		link := Link{
-			Name:        req.Name,
-			Description: req.Description,
-			URL:         req.URL,
-			Icon:        iconPath,
-			CategoryID:  req.CategoryID,
-		}
-
-		_, err = db.Exec(`
-			INSERT INTO links (category_id, name, description, icon, url) 
-			VALUES (?, ?, ?, ?, ?)`,
-			link.CategoryID, link.Name, link.Description, link.Icon, link.URL)
-
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to create link",
-			})
-		}
-
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"message": "Link created successfully",
-			"link":    link,
-		})
-	}
+type Category struct {
+	ID    int64  `json:"id"`
+	Name  string `json:"name"`
+	Icon  string `json:"icon"`
+	Links []Link `json:"links"`
 }
 
-type CreateCategoryRequest struct {
-	Name string                `form:"name"`
-	Icon *multipart.FileHeader `form:"icon"`
+type Link struct {
+	ID          int64  `json:"id"`
+	CategoryID  int64  `json:"category_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Icon        string `json:"icon"`
+	URL         string `json:"url"`
 }
 
-func CreateCategory(db *sql.DB) fiber.Handler {
-	return func(c fiber.Ctx) error {
-		var req CreateCategoryRequest
-		if err := c.Bind().MultipartForm(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Failed to parse request",
-			})
-		}
+type CategoryManager struct {
+	db         *sql.DB
+	Categories []Category
+}
 
-		if req.Name == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Name is required",
-			})
-		}
-
-		file, err := c.FormFile("icon")
-		if err != nil || file == nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Icon is required",
-			})
-		}
-
-		if file.Size > 5*1024*1024 {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "File size too large. Maximum size is 5MB",
-			})
-		}
-
-		contentType := file.Header.Get("Content-Type")
-		if contentType != "image/svg+xml" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Only SVGs are supported for category icons!",
-			})
-		}
-
-		filename := fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
-
-		iconPath, err := UploadFile(file, filename, contentType, c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to upload file, please try again!",
-			})
-		}
-
-		category := Category{
-			Name:  req.Name,
-			Icon:  iconPath,
-			Links: []Link{},
-		}
-
-		_, err = db.Exec(`
-			INSERT INTO categories (name, icon) 
-			VALUES (?, ?)`,
-			category.Name, category.Icon)
-
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to create category",
-			})
-		}
-
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"message":  "Category created successfully",
-			"category": category,
-		})
+func NewCategoryManager(db *sql.DB) (*CategoryManager, error) {
+	rows, err := db.Query(`
+		SELECT id, name, icon
+		FROM categories 
+		ORDER BY id ASC
+	`)
+	if err != nil {
+		return nil, err
 	}
+	defer rows.Close()
+
+	var categories []Category
+	for rows.Next() {
+		var cat Category
+		if err := rows.Scan(&cat.ID, &cat.Name, &cat.Icon); err != nil {
+			return nil, err
+		}
+
+		rows, err := db.Query(`
+			SELECT id, category_id, name, description, icon, url 
+			FROM links 
+			WHERE category_id = ? 
+			ORDER BY id ASC
+		`, cat.ID)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		var links []Link
+		for rows.Next() {
+			var link Link
+			if err := rows.Scan(&link.ID, &link.CategoryID, &link.Name, &link.Description,
+				&link.Icon, &link.URL); err != nil {
+				return nil, err
+			}
+			links = append(links, link)
+		}
+
+		cat.Links = links
+		categories = append(categories, cat)
+	}
+
+	return &CategoryManager{
+		db:         db,
+		Categories: categories,
+	}, nil
+}
+
+// Get Category by ID, returns nil if not found
+func (manager *CategoryManager) GetCategory(id int64) *Category {
+	var category *Category
+
+	// probably potentially bad
+	for _, cat := range manager.Categories {
+		if cat.ID == id {
+			category = &cat
+			break
+		}
+	}
+
+	return category
+}
+
+func (manager *CategoryManager) CreateCategory(category Category) (*Category, error) {
+	var err error
+
+	insertCategoryStmt, err = manager.db.Prepare(`
+		INSERT INTO categories (name, icon) 
+		VALUES (?, ?) RETURNING id`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer insertCategoryStmt.Close()
+
+	var categoryID int64
+
+	if err := insertCategoryStmt.QueryRow(category.Name, category.Icon).Scan(&categoryID); err != nil {
+		return nil, err
+	}
+
+	category.ID = categoryID
+	manager.Categories = append(manager.Categories, category)
+
+	return &category, nil
+}
+
+func (manager *CategoryManager) CreateLink(db *sql.DB, link Link) (*Link, error) {
+	var err error
+	insertLinkStmt, err = db.Prepare(`
+		INSERT INTO links (category_id, name, description, icon, url) 
+		VALUES (?, ?, ?, ?, ?) RETURNING id`)
+	if err != nil {
+		return nil, err
+	}
+
+	defer insertLinkStmt.Close()
+
+	var linkID int64
+	if err := insertLinkStmt.QueryRow(link.CategoryID, link.Name, link.Description, link.Icon, link.URL).Scan(&linkID); err != nil {
+		return nil, err
+	}
+
+	link.ID = linkID
+
+	var cat *Category
+	for i, c := range manager.Categories {
+		if c.ID == link.CategoryID {
+			cat = &manager.Categories[i]
+			break
+		}
+	}
+
+	if cat == nil {
+		return nil, fmt.Errorf("category not found")
+	}
+
+	cat.Links = append(cat.Links, link)
+
+	return &link, nil
+}
+
+func (manager *CategoryManager) DeleteLink(id any) error {
+	var icon string
+	if err := manager.db.QueryRow("SELECT icon FROM links WHERE id = ?", id).Scan(&icon); err != nil {
+		return err
+	}
+
+	_, err := manager.db.Exec("DELETE FROM links WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if icon != "" {
+		if err := os.Remove(filepath.Join("public/", icon)); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 var WeatherIcons = map[string]string{
@@ -594,11 +550,6 @@ func main() {
 	}))
 
 	router.Get("/", func(c fiber.Ctx) error {
-		categories, err := app.GetCategories()
-		if err != nil {
-			return err
-		}
-
 		weather := app.WeatherCache.GetWeather()
 
 		return c.Render("views/index", fiber.Map{
@@ -608,7 +559,7 @@ func main() {
 				"Desc": weather.WeatherText,
 				"Icon": getWeatherIcon(weather.Icon),
 			},
-			"Categories": categories,
+			"Categories": app.CategoryManager.Categories,
 		}, "layouts/main")
 	})
 
@@ -665,13 +616,8 @@ func main() {
 			return c.Redirect().To("/admin/login")
 		}
 
-		categories, err := app.GetCategories()
-		if err != nil {
-			return err
-		}
-
 		return c.Render("views/admin/index", fiber.Map{
-			"Categories": categories,
+			"Categories": app.CategoryManager.Categories,
 		}, "layouts/main")
 	})
 
@@ -684,27 +630,140 @@ func main() {
 			return c.Next()
 		})
 
-		api.Post("/categories", CreateCategory(app.db))
-		api.Post("/links", CreateLink(app.db))
-
-		api.Delete("/links/:id", func(c fiber.Ctx) error {
-			id := c.Params("id")
-
-			var icon string
-			if err := app.db.QueryRow("SELECT icon FROM links WHERE id = ?", id).Scan(&icon); err != nil {
-				return err
+		api.Post("/categories", func(c fiber.Ctx) error {
+			var req struct {
+				Name string `form:"name"`
+			}
+			if err := c.Bind().MultipartForm(&req); err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Failed to parse request",
+				})
 			}
 
-			_, err := app.db.Exec("DELETE FROM links WHERE id = ?", id)
+			if req.Name == "" {
+				return fmt.Errorf("name and icon are required")
+			}
+
+			file, err := c.FormFile("icon")
+			if err != nil || file == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Icon is required",
+				})
+			}
+
+			if file.Size > 5*1024*1024 {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "File size too large. Maximum size is 5MB",
+				})
+			}
+
+			contentType := file.Header.Get("Content-Type")
+			if contentType != "image/svg+xml" {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Only SVGs are supported for category icons!",
+				})
+			}
+
+			filename := fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
+
+			iconPath, err := UploadFile(file, filename, contentType, c)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "Failed to upload file, please try again!",
+				})
+			}
+
+			UploadFile(file, iconPath, contentType, c)
+
+			category, err := app.CategoryManager.CreateCategory(Category{
+				Name:  req.Name,
+				Icon:  iconPath,
+				Links: []Link{},
+			})
+
 			if err != nil {
 				return err
 			}
 
-			if icon != "" {
-				if err := os.Remove(filepath.Join("public/", icon)); err != nil {
-					return err
-				}
+			return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+				"message":  "Category created successfully",
+				"category": category,
+			})
+		})
+
+		api.Post("/links", func(c fiber.Ctx) error {
+			var req struct {
+				Name        string `form:"name"`
+				Description string `form:"description"`
+				URL         string `form:"url"`
+				CategoryID  int64  `form:"category_id"`
 			}
+			if err := c.Bind().MultipartForm(&req); err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Failed to parse request",
+				})
+			}
+
+			if req.Name == "" || req.URL == "" {
+				return fmt.Errorf("name and url are required")
+			}
+
+			file, err := c.FormFile("icon")
+			if err != nil || file == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Icon is required",
+				})
+			}
+
+			if file.Size > 5*1024*1024 {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "File size too large. Maximum size is 5MB",
+				})
+			}
+
+			contentType := file.Header.Get("Content-Type")
+			if !strings.HasPrefix(contentType, "image/") {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Only image files are allowed",
+				})
+			}
+
+			filename := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
+
+			iconPath, err := UploadFile(file, filename, contentType, c)
+			if err != nil {
+				slog.Error("Failed to upload file", "error", err)
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "Failed to upload file, please try again!",
+				})
+			}
+
+			UploadFile(file, iconPath, contentType, c)
+
+			link, err := app.CategoryManager.CreateLink(app.CategoryManager.db, Link{
+				CategoryID:  req.CategoryID,
+				Name:        req.Name,
+				Description: req.Description,
+				Icon:        iconPath,
+				URL:         req.URL,
+			})
+			if err != nil {
+				slog.Error("Failed to create link", "error", err)
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "Failed to create link",
+				})
+			}
+
+			return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+				"message": "Link created successfully",
+				"link":    link,
+			})
+		})
+
+		api.Delete("/links/:id", func(c fiber.Ctx) error {
+			id := c.Params("id")
+
+			app.CategoryManager.DeleteLink(id)
 			return c.SendStatus(fiber.StatusOK)
 		})
 
