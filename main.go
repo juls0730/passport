@@ -634,7 +634,7 @@ func main() {
 			var req struct {
 				Name string `form:"name"`
 			}
-			if err := c.Bind().MultipartForm(&req); err != nil {
+			if err := c.Bind().Form(&req); err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 					"message": "Failed to parse request",
 				})
@@ -698,7 +698,7 @@ func main() {
 				URL         string `form:"url"`
 				CategoryID  int64  `form:"category_id"`
 			}
-			if err := c.Bind().MultipartForm(&req); err != nil {
+			if err := c.Bind().Form(&req); err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 					"message": "Failed to parse request",
 				})

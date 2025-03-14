@@ -1,17 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @font-face {
-  font-family: "Instrument Sans";
-  src: url("/assets/fonts/InstrumentSans-VariableFont_wdth,wght.woff2")
-    format("woff2");
-  font-display: swap;
+    font-family: "Instrument Sans";
+    src: url("/assets/fonts/InstrumentSans-VariableFont_wdth,wght.woff2") format("woff2");
+    font-display: swap;
 }
 
 html {
-  line-height: normal;
-  color-scheme: dark;
+    line-height: normal;
+    color-scheme: dark;
 }
 
 h1,
@@ -20,17 +17,17 @@ h3,
 h4,
 h5,
 h6 {
-  @apply font-semibold;
+    @apply font-semibold;
 }
 
 h1 {
-  font-size: clamp(48px, 10vw, 64px);
+    font-size: clamp(48px, 10vw, 64px);
 }
 
 h2 {
-  font-size: clamp(30px, 6vw, 36px);
+    font-size: clamp(30px, 6vw, 36px);
 }
 
 h3 {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
 }

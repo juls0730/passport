@@ -23,7 +23,7 @@ Passport is a simple, fast, and lightweight web dashboard/new tab replacement.
    - The `OPENWEATHER_LAT` and `OPENWEATHER_LON` are required for the weather data to be displayed
    - The `PASSPORT_ADMIN_USERNAME` and `PASSPORT_ADMIN_PASSWORD` are required for the admin dashboard
    - The `PASSPORT_SEARCH_PROVIDER` is the search provider used for the search bar, %s is replaced with the search query
-3. Run `zqdgr build` to build the project
+3. Run `zqdgr build` to build a standalone binary
 4. Deploy `passport` to your web server
 5. profit
 
