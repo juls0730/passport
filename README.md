@@ -19,10 +19,11 @@ Passport is a simple, fast, and lightweight web dashboard/new tab replacement.
 
 1. Clone the repository
 2. Configure the `.env` file, an example is provided in the `.env example` file
-   - The `OPENWEATHER_API_KEY` is required for the weather data to be displayed
+   - The `OPENWEATHER_API_KEY` is required for the weather data to be displayed, if you want to disable the weather data, set `PASSPORT_ENABLE_WEATHER` to `false`
    - The `OPENWEATHER_LAT` and `OPENWEATHER_LON` are required for the weather data to be displayed
    - The `PASSPORT_ADMIN_USERNAME` and `PASSPORT_ADMIN_PASSWORD` are required for the admin dashboard
    - The `PASSPORT_SEARCH_PROVIDER` is the search provider used for the search bar, %s is replaced with the search query
+   - The `UPTIMEROBOT_API_KEY` is required for the uptime data to be displayed, if you want to disable the uptime data, set `PASSPORT_ENABLE_UPTIME` to `false`
 3. Run `zqdgr build` to build a standalone binary
 4. Deploy `passport` to your web server
 5. profit

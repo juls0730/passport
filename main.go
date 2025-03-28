@@ -70,6 +70,8 @@ var (
 type App struct {
 	*WeatherCache
 	*CategoryManager
+	*UptimeManager
+	db *sql.DB
 }
 
 func NewApp(dbPath string) (*App, error) {
@@ -93,10 +95,113 @@ func NewApp(dbPath string) (*App, error) {
 		return nil, err
 	}
 
+	var weatherCache *WeatherCache
+	if os.Getenv("PASSPORT_ENABLE_WEATHER") != "false" {
+		weatherCache = NewWeatherCache()
+	}
+
+	var uptimeManager *UptimeManager
+	if os.Getenv("PASSPORT_ENABLE_UPTIME") != "false" {
+		uptimeManager = NewUptimeManager()
+	}
+
 	return &App{
-		WeatherCache:    NewWeatherCache(),
+		WeatherCache:    weatherCache,
 		CategoryManager: categoryManager,
+		UptimeManager:   uptimeManager,
 	}, nil
+}
+
+type UptimeRobotSite struct {
+	FriendlyName string `json:"friendly_name"`
+	Url          string `json:"url"`
+	Status       int    `json:"status"`
+}
+
+type UptimeManager struct {
+	sites          []UptimeRobotSite
+	lastUpdate     time.Time
+	mutex          sync.RWMutex
+	updateChan     chan struct{}
+	updateInterval int
+	apiKey         string
+}
+
+func NewUptimeManager() *UptimeManager {
+	if os.Getenv("UPTIMEROBOT_API_KEY") == "" {
+		log.Fatalln("UptimeRobot API Key is required!")
+		return nil
+	}
+
+	updateInterval, err := strconv.Atoi(os.Getenv("UPTIMEROBOT_UPDATE_INTERVAL"))
+	if err != nil || updateInterval < 1 {
+		updateInterval = 5
+	}
+
+	uptimeManager := &UptimeManager{
+		updateChan:     make(chan struct{}),
+		updateInterval: updateInterval,
+		apiKey:         os.Getenv("UPTIMEROBOT_API_KEY"),
+		sites:          []UptimeRobotSite{},
+	}
+
+	go uptimeManager.updateWorker()
+
+	uptimeManager.updateChan <- struct{}{}
+
+	return uptimeManager
+}
+
+func (u *UptimeManager) getUptime() []UptimeRobotSite {
+	u.mutex.RLock()
+	defer u.mutex.RUnlock()
+	return u.sites
+}
+
+func (u *UptimeManager) updateWorker() {
+	ticker := time.NewTicker(time.Duration(u.updateInterval) * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-u.updateChan:
+			u.update()
+		case <-ticker.C:
+			u.update()
+		}
+	}
+}
+
+type UptimeRobotResponse struct {
+	Monitors []UptimeRobotSite `json:"monitors"`
+}
+
+func (u *UptimeManager) update() {
+	resp, err := http.Post("https://api.uptimerobot.com/v2/getMonitors?api_key="+u.apiKey, "application/json", nil)
+	if err != nil {
+		fmt.Printf("Error fetching uptime data: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response: %v\n", err)
+		return
+	}
+
+	var monitors UptimeRobotResponse
+	if err := json.Unmarshal(body, &monitors); err != nil {
+		fmt.Printf("Error parsing uptime data: %v\n", err)
+		return
+	}
+
+	fmt.Printf("%+v", monitors.Monitors)
+
+	u.mutex.Lock()
+	u.sites = monitors.Monitors
+	u.lastUpdate = time.Now()
+	u.mutex.Unlock()
 }
 
 type OpenWeatherResponse struct {
@@ -533,6 +638,10 @@ func main() {
 		return ""
 	})
 
+	engine.AddFunc("eq", func(a, b any) bool {
+		return a == b
+	})
+
 	router := fiber.New(fiber.Config{
 		Views: engine,
 	})
@@ -550,17 +659,27 @@ func main() {
 	}))
 
 	router.Get("/", func(c fiber.Ctx) error {
-		weather := app.WeatherCache.GetWeather()
-
-		return c.Render("views/index", fiber.Map{
+		renderData := fiber.Map{
 			"SearchProvider": os.Getenv("PASSPORT_SEARCH_PROVIDER"),
-			"WeatherData": fiber.Map{
+			"Categories":     app.CategoryManager.Categories,
+		}
+
+		if os.Getenv("PASSPORT_ENABLE_WEATHER") != "false" {
+			weather := app.WeatherCache.GetWeather()
+
+			renderData["WeatherData"] = fiber.Map{
 				"Temp": weather.Temperature,
 				"Desc": weather.WeatherText,
 				"Icon": getWeatherIcon(weather.Icon),
-			},
-			"Categories": app.CategoryManager.Categories,
-		}, "layouts/main")
+			}
+		}
+
+		if os.Getenv("PASSPORT_ENABLE_UPTIME") != "false" {
+			fmt.Printf("%+v", app.UptimeManager.getUptime())
+			renderData["UptimeData"] = app.UptimeManager.getUptime()
+		}
+
+		return c.Render("views/index", renderData, "layouts/main")
 	})
 
 	router.Use(middleware.AdminMiddleware(app.db))
@@ -825,5 +944,7 @@ func main() {
 		})
 	}
 
-	router.Listen(":3000")
+	router.Listen(":3000", fiber.ListenConfig{
+		EnablePrefork: os.Getenv("PASSPORT_ENABLE_PREFORK") == "true",
+	})
 }
