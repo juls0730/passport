@@ -135,7 +135,7 @@ func NewUptimeManager() *UptimeManager {
 
 	updateInterval, err := strconv.Atoi(os.Getenv("UPTIMEROBOT_UPDATE_INTERVAL"))
 	if err != nil || updateInterval < 1 {
-		updateInterval = 5
+		updateInterval = 300
 	}
 
 	uptimeManager := &UptimeManager{
@@ -159,7 +159,7 @@ func (u *UptimeManager) getUptime() []UptimeRobotSite {
 }
 
 func (u *UptimeManager) updateWorker() {
-	ticker := time.NewTicker(time.Duration(u.updateInterval) * time.Minute)
+	ticker := time.NewTicker(time.Duration(u.updateInterval) * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -195,8 +195,6 @@ func (u *UptimeManager) update() {
 		fmt.Printf("Error parsing uptime data: %v\n", err)
 		return
 	}
-
-	fmt.Printf("%+v", monitors.Monitors)
 
 	u.mutex.Lock()
 	u.sites = monitors.Monitors
@@ -675,7 +673,6 @@ func main() {
 		}
 
 		if os.Getenv("PASSPORT_ENABLE_UPTIME") != "false" {
-			fmt.Printf("%+v", app.UptimeManager.getUptime())
 			renderData["UptimeData"] = app.UptimeManager.getUptime()
 		}
 

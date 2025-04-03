@@ -18,15 +18,26 @@ Passport is a simple, fast, and lightweight web dashboard/new tab replacement.
 ### Usage
 
 1. Clone the repository
-2. Configure the `.env` file, an example is provided in the `.env example` file
-   - The `OPENWEATHER_API_KEY` is required for the weather data to be displayed, if you want to disable the weather data, set `PASSPORT_ENABLE_WEATHER` to `false`
-   - The `OPENWEATHER_LAT` and `OPENWEATHER_LON` are required for the weather data to be displayed
-   - The `PASSPORT_ADMIN_USERNAME` and `PASSPORT_ADMIN_PASSWORD` are required for the admin dashboard
-   - The `PASSPORT_SEARCH_PROVIDER` is the search provider used for the search bar, %s is replaced with the search query
-   - The `UPTIMEROBOT_API_KEY` is required for the uptime data to be displayed, if you want to disable the uptime data, set `PASSPORT_ENABLE_UPTIME` to `false`
-3. Run `zqdgr build` to build a standalone binary
+2. Configure the `.env` file, an example is provided in the `.env.example` file, see below for every available environment variable
 4. Deploy `passport` to your web server
 5. profit
+
+#### Configuration
+
+| Environment Variable | Description | Required | Default |
+| --- | --- | --- | --- | 
+| `PASSPORT_DEV_MODE` | Enables dev mode | false | false |
+| `PASSPORT_ENABLE_WEATHER` | Enables weather data, requires an OpenWeather API key | false | true |
+| `PASSPORT_ENABLE_UPTIME` | Enables uptime data, requires an UptimeRobot API key | false | true |
+| `PASSPORT_ADMIN_USERNAME` | The username for the admin dashboard | true |
+| `PASSPORT_ADMIN_PASSWORD` | The password for the admin dashboard | true |
+| `PASSPORT_SEARCH_PROVIDER` | The search provider to use for the search bar | true |
+| `OPENWEATHER_API_KEY` | The OpenWeather API key | if enabled |
+| `OPENWEATHER_LAT` | The latitude of your location | if enabled |
+| `OPENWEATHER_LON` | The longitude of your location | if enabled |
+| `OPENWEATHER_UPDATE_INTERVAL` | The interval in minutes to update the weather data | false | 15 |
+| `UPTIMEROBOT_API_KEY` | The UptimeRobot API key | if enabled |
+| `UPTIMEROBOT_UPDATE_INTERVAL` | The interval in seconds to update the uptime data | false | 300 |
 
 ### Adding links and categories
 

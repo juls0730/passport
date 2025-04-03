@@ -6,6 +6,10 @@
     font-display: swap;
 }
 
+:root {
+    --default-font-family: "Instrument Sans", ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+}
+
 html {
     line-height: normal;
     color-scheme: dark;
