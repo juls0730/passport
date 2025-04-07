@@ -13,5 +13,5 @@
         "dev": "go generate; PASSPORT_DEV_MODE=true go run main.go",
         "build": "go generate && go build -tags netgo,prod -o passport"
     },
-    "pattern": "**/*.go,views/**/*.hbs,styles/**/*.css,assets/**/*.{svg,png,jpg,jpeg,webp,woff2,ttf,otf,eot,ico,gif,webp}"
+    "pattern": "**/*.go,templates/views/**/*.hbs,styles/**/*.css,assets/**/*.{svg,png,jpg,jpeg,webp,woff2,ttf,otf,eot,ico,gif,webp}" 
 }

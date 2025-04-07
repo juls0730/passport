@@ -1,41 +1,42 @@
-<main class="flex justify-center items-center h-screen relative bg-[#0E0A0E]">
-    {{#if WeatherData}}
-    <div class="absolute top-2.5 left-2.5">
-        <div class="text-[#BABABA] flex items-center">
-            <span class="mr-2 flex items-center">
-                {{{WeatherData.Icon}}}
-            </span>
-            <div class="font-semibold">
-                <p>{{WeatherData.Temp}}°C</p>
-                <p>{{WeatherData.Desc}}</p>
-            </div>
-        </div>
-    </div>
-    {{/if}}
-    {{#if UptimeData}}
-    <div class="absolute top-2.5 right-2.5">
-        <div class="text-[#BABABA] flex items-end flex-col">
-            {{!-- loop over UptimeData --}}
-            {{#each UptimeData}}
-            <div class="flex items-center">
+<main class="grid grid-rows-3 grid-cols-[1fr] justify-center items-center h-screen bg-[#0E0A0E]">
+    <div class="flex h-full p-2.5 justify-between"> 
+        <div>
+        {{#if WeatherData}}
+            <div class="text-[#BABABA] flex items-center">
                 <span class="mr-2 flex items-center">
-                    {{{this.FriendlyName}}}
+                    {{{WeatherData.Icon}}}
                 </span>
-                <div class="relative my-auto">
-                    {{#if (eq this.Status 2)}}
-                    <span class="absolute w-2 h-2 rounded-full bg-emerald-400 animate-ping block"></span>
-                    <span class="relative w-2 h-2 rounded-full bg-emerald-500 block"></span>
-                    {{else}}
-                    <span class="absolute w-2 h-2 rounded-full bg-rose-400 animate-ping block"></span>
-                    <span class="relative w-2 h-2 rounded-full bg-rose-500 block"></span>
-                    {{/if}}
+                <div class="font-semibold">
+                    <p>{{WeatherData.Temp}}°C</p>
+                    <p>{{WeatherData.Desc}}</p>
                 </div>
             </div>
-            {{/each}}
+        {{/if}}
+        </div>
+        <div>
+        {{#if UptimeData}}
+            <div class="text-[#BABABA] flex items-end flex-col">
+                {{#each UptimeData}}
+                <div class="flex items-center">
+                    <span class="mr-2 flex items-center">
+                        {{{this.FriendlyName}}}
+                    </span>
+                    <div class="relative my-auto">
+                        {{#if (eq this.Status 2)}}
+                        <span class="absolute w-2 h-2 rounded-full bg-emerald-400 animate-ping block"></span>
+                        <span class="relative w-2 h-2 rounded-full bg-emerald-500 block"></span>
+                        {{else}}
+                        <span class="absolute w-2 h-2 rounded-full bg-rose-400 animate-ping block"></span>
+                        <span class="relative w-2 h-2 rounded-full bg-rose-500 block"></span>
+                        {{/if}}
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        {{/if}}
         </div>
     </div>
-    {{/if}}
-    <div class="flex flex-col items-center w-full mx-6">
+    <div class="row-start-2 flex flex-col items-center w-full px-6">
         <div class="flex items-center pb-2.5">
             <svg class="mr-3 aspect-square w-[clamp(48px,10vw,60px)]" viewBox="0 0 100 100" fill="none"
                 xmlns="http://www.w3.org/2000/svg">
