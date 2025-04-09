@@ -6,7 +6,7 @@ Passport is a simple, fast, and lightweight web dashboard/new tab replacement.
 
 ## Getting Started
 
-![Screenshot 2025-03-28 at 07-44-22 Passport](https://github.com/user-attachments/assets/d31b0694-3445-46f8-af01-158703e44b4c)
+![Screenshot of Passport](/screenshot.png)
 
 ### Prerequisites
 
