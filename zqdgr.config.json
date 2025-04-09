@@ -1,6 +1,6 @@
 {
     "name": "passport",
-    "version": "0.0.1",
+    "version": "0.2.0",
     "description": "Passport is a simple, lightweight, and fast dashboard/new tab page for your browser.",
     "author": "juls0730",
     "license": "BSL-1.0",
@@ -13,5 +13,5 @@
         "dev": "go generate; PASSPORT_DEV_MODE=true go run main.go",
         "build": "go generate && go build -tags netgo,prod -o passport"
     },
-    "pattern": "**/*.go,templates/views/**/*.hbs,styles/**/*.css,assets/**/*.{svg,png,jpg,jpeg,webp,woff2,ttf,otf,eot,ico,gif,webp}" 
+    "pattern": "**/*.go,templates/views/**/*.hbs,styles/**/*.css,assets/**/*.{svg,png,jpg,jpeg,webp,woff2,ttf,otf,eot,ico,gif,webp}"
 }

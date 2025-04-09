@@ -7,7 +7,7 @@
 }
 
 :root {
-    --default-font-family: "Instrument Sans", ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+    --default-font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 html {
@@ -25,7 +25,7 @@ h6 {
 }
 
 h1 {
-    font-size: clamp(48px, 10vw, 64px);
+    font-size: clamp(42px, 10vw, 64px);
 }
 
 h2 {
