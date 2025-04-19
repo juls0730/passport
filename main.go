@@ -184,6 +184,7 @@ func NewApp(dbPath string) (*App, error) {
 		WeatherCache:    weatherCache,
 		CategoryManager: categoryManager,
 		UptimeManager:   uptimeManager,
+		db:              db,
 	}, nil
 }
 
