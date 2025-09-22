@@ -1,6 +1,8 @@
 passport
 .env
 passport.db*
-public/uploads/
+public
 zqdgr
+
+# compiled via go prepare
 assets/tailwind.css

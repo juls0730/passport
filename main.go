@@ -19,9 +19,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v11"
@@ -143,13 +146,40 @@ type App struct {
 	db *sql.DB
 }
 
-func NewApp(dbPath string) (*App, error) {
+func (app *App) Close() error {
+	return app.db.Close()
+}
+
+func NewApp(dbPath string, options map[string]any) (*App, error) {
 	config, err := ParseConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	db, err := sql.Open("sqlite3", dbPath)
+	file, err := os.OpenFile(dbPath, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		if os.IsPermission(err) {
+			return nil, fmt.Errorf("file %s is not readable and writable: %v", dbPath, err)
+		}
+		return nil, fmt.Errorf("failed to open file %s for read/write: %v", dbPath, err)
+	}
+	defer file.Close()
+
+	var connectionOpts string
+	for k, v := range options {
+		if connectionOpts != "" {
+			connectionOpts += "&"
+		}
+
+		connectionOpts += fmt.Sprintf("%s=%v", k, v)
+	}
+
+	db, err := sql.Open("sqlite3", fmt.Sprintf("%s?%s", dbPath, connectionOpts))
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
 	if err != nil {
 		return nil, err
 	}
@@ -481,72 +511,64 @@ type Link struct {
 }
 
 type CategoryManager struct {
-	db         *sql.DB
-	Categories []Category
+	db *sql.DB
 }
 
 func NewCategoryManager(db *sql.DB) (*CategoryManager, error) {
-	rows, err := db.Query(`
+	return &CategoryManager{
+		db: db,
+	}, nil
+}
+
+func (manager *CategoryManager) GetCategories() []Category {
+	rows, err := manager.db.Query(`
 		SELECT id, name, icon
 		FROM categories 
 		ORDER BY id ASC
 	`)
+
 	if err != nil {
-		return nil, err
+		return nil
 	}
 	defer rows.Close()
 
 	var categories []Category
 	for rows.Next() {
 		var cat Category
+
 		if err := rows.Scan(&cat.ID, &cat.Name, &cat.Icon); err != nil {
-			return nil, err
+			return nil
 		}
 
-		rows, err := db.Query(`
-			SELECT id, category_id, name, description, icon, url 
-			FROM links 
-			WHERE category_id = ? 
-			ORDER BY id ASC
-		`, cat.ID)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		var links []Link
-		for rows.Next() {
-			var link Link
-			if err := rows.Scan(&link.ID, &link.CategoryID, &link.Name, &link.Description,
-				&link.Icon, &link.URL); err != nil {
-				return nil, err
-			}
-			links = append(links, link)
-		}
-
-		cat.Links = links
 		categories = append(categories, cat)
 	}
 
-	return &CategoryManager{
-		db:         db,
-		Categories: categories,
-	}, nil
+	for i, cat := range categories {
+		categories[i].Links = manager.GetLinks(cat.ID)
+	}
+
+	return categories
 }
 
 // Get Category by ID, returns nil if not found
 func (manager *CategoryManager) GetCategory(id int64) *Category {
-	var category *Category
+	rows, err := manager.db.Query(`
+		SELECT id, name, icon
+		FROM categories 
+		WHERE id = ?
+	`, id)
 
-	// probably potentially bad
-	for _, cat := range manager.Categories {
-		if cat.ID == id {
-			category = &cat
-			break
-		}
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	var cat Category
+	if err := rows.Scan(&cat.ID, &cat.Name, &cat.Icon); err != nil {
+		return nil
 	}
 
-	return category
+	return &cat
 }
 
 func (manager *CategoryManager) CreateCategory(category Category) (*Category, error) {
@@ -569,9 +591,89 @@ func (manager *CategoryManager) CreateCategory(category Category) (*Category, er
 	}
 
 	category.ID = categoryID
-	manager.Categories = append(manager.Categories, category)
 
 	return &category, nil
+}
+
+func (manager *CategoryManager) DeleteCategory(id int64) error {
+	rows, err := manager.db.Query(`
+				SELECT icon FROM categories WHERE id = ?
+				UNION
+				SELECT icon FROM links WHERE category_id = ?
+			`, id, id)
+
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	var icons []string
+	for rows.Next() {
+		var icon string
+		if err := rows.Scan(&icon); err != nil {
+			return err
+		}
+		icons = append(icons, icon)
+	}
+
+	tx, err := manager.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec("DELETE FROM categories WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec("DELETE FROM links WHERE category_id = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	for _, icon := range icons {
+		if icon == "" {
+			continue
+		}
+
+		if err := os.Remove(filepath.Join("public/", icon)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (manager *CategoryManager) GetLinks(categoryID int64) []Link {
+	rows, err := manager.db.Query(`
+		SELECT id, category_id, name, description, icon, url 
+		FROM links 
+		WHERE category_id = ? 
+		ORDER BY id ASC
+	`, categoryID)
+
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	var links []Link
+	for rows.Next() {
+		var link Link
+		if err := rows.Scan(&link.ID, &link.CategoryID, &link.Name, &link.Description,
+			&link.Icon, &link.URL); err != nil {
+			return nil
+		}
+		links = append(links, link)
+	}
+
+	return links
 }
 
 func (manager *CategoryManager) CreateLink(db *sql.DB, link Link) (*Link, error) {
@@ -591,20 +693,6 @@ func (manager *CategoryManager) CreateLink(db *sql.DB, link Link) (*Link, error)
 	}
 
 	link.ID = linkID
-
-	var cat *Category
-	for i, c := range manager.Categories {
-		if c.ID == link.CategoryID {
-			cat = &manager.Categories[i]
-			break
-		}
-	}
-
-	if cat == nil {
-		return nil, fmt.Errorf("category not found")
-	}
-
-	cat.Links = append(cat.Links, link)
 
 	return &link, nil
 }
@@ -673,9 +761,7 @@ func getWeatherIcon(iconId string) string {
 }
 
 func init() {
-	if err := godotenv.Load(); err != nil {
-		fmt.Println("No .env file found, using default values")
-	}
+	godotenv.Load()
 }
 
 func main() {
@@ -683,10 +769,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	app, err := NewApp("passport.db?cache=shared&mode=rwc&_journal_mode=WAL")
+	dbPath, err := filepath.Abs("passport.db")
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	app, err := NewApp(dbPath, map[string]any{
+		"cache":         "shared",
+		"mode":          "rwc",
+		"_journal_mode": "WAL",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer app.Close()
+
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		<-c
+		app.Close()
+		os.Exit(0)
+	}()
 
 	templatesDir, err := fs.Sub(embeddedAssets, "templates")
 	if err != nil {
@@ -727,6 +831,11 @@ func main() {
 
 	router.Use(helmet.New(helmet.ConfigDefault))
 
+	// redirect /favicon.ico to /assets/favicon.ico
+	router.Get("/favicon.ico", func(c fiber.Ctx) error {
+		return c.Redirect().To("/assets/favicon.ico")
+	})
+
 	router.Use("/", static.New("./public", static.Config{
 		Browse: false,
 		MaxAge: 31536000,
@@ -741,7 +850,7 @@ func main() {
 		renderData := fiber.Map{
 			"SearchProviderURL": app.Config.SearchProvider.URL,
 			"SearchParam":       app.Config.SearchProvider.Query,
-			"Categories":        app.CategoryManager.Categories,
+			"Categories":        app.CategoryManager.GetCategories(),
 		}
 
 		if app.Config.WeatherEnabled {
@@ -816,12 +925,13 @@ func main() {
 		}
 
 		return c.Render("views/admin/index", fiber.Map{
-			"Categories": app.CategoryManager.Categories,
+			"Categories": app.CategoryManager.GetCategories(),
 		}, "layouts/main")
 	})
 
 	api := router.Group("/api")
 	{
+		// all API routes require admin auth. No user needs to make api requests since the site is SSR
 		api.Use(func(c fiber.Ctx) error {
 			if c.Locals("IsAdmin") == nil {
 				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
@@ -962,62 +1072,24 @@ func main() {
 		api.Delete("/links/:id", func(c fiber.Ctx) error {
 			id := c.Params("id")
 
-			app.CategoryManager.DeleteLink(id)
+			err = app.CategoryManager.DeleteLink(id)
+			if err != nil {
+				return err
+			}
+
 			return c.SendStatus(fiber.StatusOK)
 		})
 
 		api.Delete("/categories/:id", func(c fiber.Ctx) error {
-			id := c.Params("id")
-
-			rows, err := app.db.Query(`
-				SELECT icon FROM categories WHERE id = ?
-				UNION
-				SELECT icon FROM links WHERE category_id = ?
-			`, id, id)
-
+			// id = parseInt(c.Params("id"))
+			id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 			if err != nil {
 				return err
 			}
 
-			defer rows.Close()
-
-			var icons []string
-			for rows.Next() {
-				var icon string
-				if err := rows.Scan(&icon); err != nil {
-					return err
-				}
-				icons = append(icons, icon)
-			}
-
-			tx, err := app.db.Begin()
+			err = app.CategoryManager.DeleteCategory(id)
 			if err != nil {
 				return err
-			}
-			defer tx.Rollback()
-
-			_, err = tx.Exec("DELETE FROM categories WHERE id = ?", id)
-			if err != nil {
-				return err
-			}
-
-			_, err = tx.Exec("DELETE FROM links WHERE category_id = ?", id)
-			if err != nil {
-				return err
-			}
-
-			if err := tx.Commit(); err != nil {
-				return err
-			}
-
-			for _, icon := range icons {
-				if icon == "" {
-					continue
-				}
-
-				if err := os.Remove(filepath.Join("public/", icon)); err != nil {
-					return err
-				}
 			}
 
 			return c.SendStatus(fiber.StatusOK)

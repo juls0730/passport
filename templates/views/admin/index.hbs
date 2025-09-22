@@ -1,4 +1,4 @@
-<section class="flex justify-center w-full">
+<section class="flex justify-center w-full transition-[filter] duration-300 ease-[cubic-bezier(0.45,_0,_0.55,_1)]">
     <div class="w-full sm:w-4/5 p-2.5">
         {{#each Categories}}
         <div class="flex items-center">
@@ -31,7 +31,7 @@
                     </svg></button>
             </div>
             {{/each}}
-            <div onclick="addLink({{this.ID}})"
+            <div onclick="openLinkModal({{this.ID}})"
                 class="rounded-2xl border border-dashed border-[#656565] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-cursor select-none cursor-pointer">
                 <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
                     <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -48,14 +48,15 @@
                 <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 5v14m-7-7h14" />
             </svg>
-            <h2 onclick="addCategory()" class="text-[#656565] underline decoration-dashed cursor-pointer">
+            <h2 onclick="openCategoryModal()" class="text-[#656565] underline decoration-dashed cursor-pointer">
                 Add a new category
             </h2>
         </div>
     </div>
 </section>
-<div id="linkModal" class="hidden absolute top-0 left-0 bottom-0 right-0 bg-[#00000070] justify-center items-center">
-    <div class="bg-[#151316] rounded-xl overflow-hidden w-fit p-4">
+<div id="linkModal"
+    class="flex modal-bg fixed top-0 left-0 bottom-0 right-0 bg-[#00000070] justify-center items-center">
+    <div class="bg-[#151316] rounded-xl overflow-hidden w-fit p-4 modal">
         <h3>Add A link</h3>
         <form id="link-form" action="/api/links" method="post" class="flex flex-col gap-y-3 my-2">
             <div>
@@ -78,7 +79,8 @@
             </div>
             <div>
                 <label for="linkIcon">Icon</label>
-                <input class="w-full text-white" type="file" name="icon" id="linkIcon" accept="image/*" />
+                <input class="w-full text-white py-2 px-4 rounded bg-[#1C1C21] border border-[#56565b]/30" type="file"
+                    name="icon" id="linkIcon" accept="image/*" />
             </div>
             <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Add</button>
         </form>
@@ -86,10 +88,11 @@
     </div>
 </div>
 <div id="categoryModal"
-    class="hidden absolute top-0 left-0 bottom-0 right-0 bg-[#00000070] justify-center items-center">
-    <div class="bg-[#151316] rounded-xl overflow-hidden w-fit p-4">
+    class="flex modal-bg fixed top-0 left-0 bottom-0 right-0 bg-[#00000070] justify-center items-center">
+    <div class="bg-[#151316] rounded-xl overflow-hidden w-fit p-4 modal">
         <h3>Create A category</h3>
-        <form id="category-form" action="/api/categories" method="post" class="flex flex-col gap-y-3 my-2">
+        <form id="category-form" action="/api/categories" method="post"
+            class="flex flex-col gap-y-3 my-2 [&>div]:flex [&>div]:flex-col [&>div]:gap-1">
             <div>
                 <label for="categoryName">Name</label>
                 <input
@@ -98,7 +101,8 @@
             </div>
             <div>
                 <label for="linkIcon">Icon</label>
-                <input class="w-full text-white" type="file" name="icon" id="linkIcon" accept=".svg" />
+                <input class="w-full text-white py-2 px-4 rounded bg-[#1C1C21] border border-[#56565b]/30" type="file"
+                    name="icon" id="linkIcon" accept=".svg" />
             </div>
             <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Create</button>
         </form>
@@ -108,19 +112,41 @@
 
 <script>
     // idfk what this variable capitalization is, it's a mess
-    let linkModal = document.getElementById("linkModal");
-    let categoryModal = document.getElementById("categoryModal");
+    let linkModalBg = document.getElementById("linkModal");
+    let linkModal = linkModalBg.querySelector("div");
+    let categoryModalBg = document.getElementById("categoryModal");
+    let categoryModal = categoryModalBg.querySelector("div");
+    let pageElement = document.querySelector("section");
     let targetCategoryID = null;
 
-    function addCategory() {
-        categoryModal.classList.remove("hidden");
-        categoryModal.classList.add("flex");
+    function openCategoryModal() {
+        pageElement.style.filter = "blur(20px)";
+
+        categoryModalBg.classList.add("is-visible");
+        categoryModal.classList.add("is-visible");
     }
 
-    function addLink(categoryID) {
+    function closeCategoryModal() {
+        pageElement.style.filter = "";
+
+        categoryModalBg.classList.remove("is-visible");
+        categoryModal.classList.remove("is-visible");
+    }
+
+    function openLinkModal(categoryID) {
         targetCategoryID = categoryID;
-        linkModal.classList.remove("hidden");
-        linkModal.classList.add("flex");
+
+        pageElement.style.filter = "blur(20px)";
+
+        linkModalBg.classList.add("is-visible");
+        linkModal.classList.add("is-visible");
+    }
+
+    function closeLinkModal() {
+        pageElement.style.filter = "";
+
+        linkModalBg.classList.remove("is-visible");
+        linkModal.classList.remove("is-visible");
     }
 
     async function deleteLink(linkID) {
@@ -155,8 +181,7 @@
         });
 
         if (res.status === 201) {
-            linkModal.classList.add("hidden");
-            linkModal.classList.remove("flex");
+            closeLinkModal();
             document.getElementById("link-form").reset();
             location.reload();
         } else {
@@ -175,8 +200,7 @@
         });
 
         if (res.status === 201) {
-            categoryModal.classList.add("hidden");
-            categoryModal.classList.remove("flex");
+            closeCategoryModal()
             document.getElementById("category-form").reset();
             location.reload();
         } else {
@@ -185,19 +209,47 @@
         }
     });
 
-    linkModal.addEventListener("click", (event) => {
-        if (event.target === linkModal) {
+    linkModalBg.addEventListener("click", (event) => {
+        if (event.target === linkModalBg) {
             targetCategoryID = null;
-            linkModal.classList.add("hidden");
-            linkModal.classList.remove("flex");
+            closeLinkModal();
         }
     });
 
-    categoryModal.addEventListener("click", (event) => {
-        if (event.target === categoryModal) {
+    categoryModalBg.addEventListener("click", (event) => {
+        if (event.target === categoryModalBg) {
             targetCategoryID = null;
-            categoryModal.classList.add("hidden");
-            categoryModal.classList.remove("flex");
+            closeCategoryModal();
         }
     });
 </script>
+
+<style>
+    .modal-bg {
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.3s ease, visibility 0s 0.3s;
+        transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    .modal-bg.is-visible {
+        visibility: visible;
+        opacity: 1;
+        transition-delay: 0s;
+    }
+
+    .modal {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    .modal.is-visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+        transition-delay: 0s;
+    }
+</style>
