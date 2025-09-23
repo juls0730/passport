@@ -59,21 +59,25 @@ You can then run the binary.
 
 #### Weather configuration
 
-| Environment Variable          | Description                                                               | Required   | Default        |
-| ----------------------------- | ------------------------------------------------------------------------- | ---------- | -------------- |
-| `OPENWEATHER_PROVIDER`        | The weather provider to use, currently only `openweathermap` is supported | true       | openweathermap |
-| `OPENWEATHER_API_KEY`         | The OpenWeather API key                                                   | if enabled |                |
-| `OPENWEATHER_TEMP_UNITS`      | The temperature units to use, either `metric` or `imperial`               | false      | metric         |
-| `OPENWEATHER_LAT`             | The latitude of your location                                             | if enabled |                |
-| `OPENWEATHER_LON`             | The longitude of your location                                            | if enabled |                |
-| `OPENWEATHER_UPDATE_INTERVAL` | The interval in minutes to update the weather data                        | false      | 15             |
+The following only applies if you are using the OpenWeather integration.
+
+| Environment Variable          | Description                                                               | Required | Default        |
+| ----------------------------- | ------------------------------------------------------------------------- | -------- | -------------- |
+| `OPENWEATHER_PROVIDER`        | The weather provider to use, currently only `openweathermap` is supported | true     | openweathermap |
+| `OPENWEATHER_API_KEY`         | The OpenWeather API key                                                   | true     |                |
+| `OPENWEATHER_TEMP_UNITS`      | The temperature units to use, either `metric` or `imperial`               | false    | metric         |
+| `OPENWEATHER_LAT`             | The latitude of your location                                             | true     |                |
+| `OPENWEATHER_LON`             | The longitude of your location                                            | true     |                |
+| `OPENWEATHER_UPDATE_INTERVAL` | The interval in minutes to update the weather data                        | false    | 15             |
 
 #### Uptime configuration
 
-| Environment Variable          | Description                                       | Required   | Default |
-| ----------------------------- | ------------------------------------------------- | ---------- | ------- |
-| `UPTIMEROBOT_API_KEY`         | The UptimeRobot API key                           | if enabled |         |
-| `UPTIMEROBOT_UPDATE_INTERVAL` | The interval in seconds to update the uptime data | false      | 300     |
+The following only applies if you are using the UptimeRobot integration.
+
+| Environment Variable          | Description                                       | Required | Default |
+| ----------------------------- | ------------------------------------------------- | -------- | ------- |
+| `UPTIMEROBOT_API_KEY`         | The UptimeRobot API key                           | true     |         |
+| `UPTIMEROBOT_UPDATE_INTERVAL` | The interval in seconds to update the uptime data | false    | 300     |
 
 ### Adding links and categories
 

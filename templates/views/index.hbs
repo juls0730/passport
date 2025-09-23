@@ -70,23 +70,24 @@
 <section class="flex justify-center w-full">
     <div class="w-full sm:w-4/5 p-2.5">
         {{#each Categories}}
-        <div class="flex items-center w-fit">
-            <img class="object-contain mr-2 select-none text-white" width="32" height="32" draggable="false" alt="{{this.Name}}"
+        <div class="flex items-center mt-2 first:mt-0">
+            <img class="object-contain mr-2 select-none" width="32" height="32" draggable="false" alt="{{this.Name}}"
                 src="{{this.Icon}}" />
-            <h2 class="capitalize w-fit">{{this.Name}}</h2>
+            <h2 class="capitalize break-all">{{this.Name}}</h2>
         </div>
         <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
-            {{#each this.Links}}
-            <a href="{{this.URL}}"
+            {{#each this.Links}} <a href="{{this.URL}}"
                 class="underline-none text-unset rounded-2xl bg-[#211F23] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform,translate] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1"
                 draggable="false" target="_blank" rel="noopener noreferrer">
-                <img class="object-contain mr-2 select-none rounded-md" width="64" height="64" draggable="false"
-                    src="{{this.Icon}}" alt="{{this.Name}}" />
-                <div>
+                <img class="mr-2 select-none rounded-md aspect-square object-cover" width="64" height="64"
+                    draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
+                <div class="break-all">
                     <h3>{{this.Name}}</h3>
                     <p class="text-[#D7D7D7]">{{this.Description}}</p>
                 </div>
             </a>
+            {{else}}
+            <p class="text-[#D7D7D7]">No links here, add one!</p>
             {{/each}}
         </div>
         {{/each}}

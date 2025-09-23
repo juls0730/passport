@@ -453,6 +453,7 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 	case "image/webp":
 		img, err = webp.Decode(srcFile)
 	case "image/svg+xml":
+		// does not fall through (my C brain was tripping over this)
 	default:
 		return "", errors.New("unsupported file type")
 	}
@@ -552,19 +553,10 @@ func (manager *CategoryManager) GetCategories() []Category {
 
 // Get Category by ID, returns nil if not found
 func (manager *CategoryManager) GetCategory(id int64) *Category {
-	rows, err := manager.db.Query(`
-		SELECT id, name, icon
-		FROM categories 
-		WHERE id = ?
-	`, id)
-
-	if err != nil {
-		return nil
-	}
-	defer rows.Close()
+	row := manager.db.QueryRow(`SELECT id, name, icon FROM categories WHERE id = ?`, id)
 
 	var cat Category
-	if err := rows.Scan(&cat.ID, &cat.Name, &cat.Icon); err != nil {
+	if err := row.Scan(&cat.ID, &cat.Name, &cat.Icon); err != nil {
 		return nil
 	}
 
@@ -648,6 +640,17 @@ func (manager *CategoryManager) DeleteCategory(id int64) error {
 	}
 
 	return nil
+}
+
+func (manager *CategoryManager) GetLink(id int64) *Link {
+	row := manager.db.QueryRow(`SELECT id, category_id, name, description, icon, url FROM links WHERE id = ?`, id)
+
+	var link Link
+	if err := row.Scan(&link.ID, &link.CategoryID, &link.Name, &link.Description, &link.Icon, &link.URL); err != nil {
+		return nil
+	}
+
+	return &link
 }
 
 func (manager *CategoryManager) GetLinks(categoryID int64) []Link {
@@ -939,7 +942,7 @@ func main() {
 			return c.Next()
 		})
 
-		api.Post("/categories", func(c fiber.Ctx) error {
+		api.Post("/category", func(c fiber.Ctx) error {
 			var req struct {
 				Name string `form:"name"`
 			}
@@ -950,7 +953,9 @@ func main() {
 			}
 
 			if req.Name == "" {
-				return fmt.Errorf("name and icon are required")
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Name is required",
+				})
 			}
 
 			file, err := c.FormFile("icon")
@@ -991,7 +996,9 @@ func main() {
 			})
 
 			if err != nil {
-				return err
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to create category: %v", err),
+				})
 			}
 
 			return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -1000,12 +1007,11 @@ func main() {
 			})
 		})
 
-		api.Post("/links", func(c fiber.Ctx) error {
+		api.Post("/category/:id/link", func(c fiber.Ctx) error {
 			var req struct {
 				Name        string `form:"name"`
 				Description string `form:"description"`
 				URL         string `form:"url"`
-				CategoryID  int64  `form:"category_id"`
 			}
 			if err := c.Bind().Form(&req); err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -1014,7 +1020,22 @@ func main() {
 			}
 
 			if req.Name == "" || req.URL == "" {
-				return fmt.Errorf("name and url are required")
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Name and URL are required",
+				})
+			}
+
+			categoryID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to parse category ID: %v", err),
+				})
+			}
+
+			if app.CategoryManager.GetCategory(categoryID) == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Category not found",
+				})
 			}
 
 			file, err := c.FormFile("icon")
@@ -1050,7 +1071,7 @@ func main() {
 			UploadFile(file, iconPath, contentType, c)
 
 			link, err := app.CategoryManager.CreateLink(app.CategoryManager.db, Link{
-				CategoryID:  req.CategoryID,
+				CategoryID:  categoryID,
 				Name:        req.Name,
 				Description: req.Description,
 				Icon:        iconPath,
@@ -1069,27 +1090,70 @@ func main() {
 			})
 		})
 
-		api.Delete("/links/:id", func(c fiber.Ctx) error {
-			id := c.Params("id")
-
-			err = app.CategoryManager.DeleteLink(id)
+		api.Delete("/category/:id/link/:linkID", func(c fiber.Ctx) error {
+			linkID, err := strconv.ParseInt(c.Params("linkID"), 10, 64)
 			if err != nil {
-				return err
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to parse link ID: %v", err),
+				})
+			}
+
+			categoryID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to parse category ID: %v", err),
+				})
+			}
+
+			if app.CategoryManager.GetCategory(categoryID) == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Category not found",
+				})
+			}
+
+			link := app.CategoryManager.GetLink(linkID)
+			if link == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Link not found",
+				})
+			}
+
+			if link.CategoryID != categoryID {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Invalid category ID",
+				})
+			}
+
+			err = app.CategoryManager.DeleteLink(linkID)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to delete link: %v", err),
+				})
 			}
 
 			return c.SendStatus(fiber.StatusOK)
 		})
 
-		api.Delete("/categories/:id", func(c fiber.Ctx) error {
+		api.Delete("/category/:id", func(c fiber.Ctx) error {
 			// id = parseInt(c.Params("id"))
 			id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 			if err != nil {
-				return err
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to parse category ID: %v", err),
+				})
+			}
+
+			if app.CategoryManager.GetCategory(id) == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Category not found",
+				})
 			}
 
 			err = app.CategoryManager.DeleteCategory(id)
 			if err != nil {
-				return err
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to delete category: %v", err),
+				})
 			}
 
 			return c.SendStatus(fiber.StatusOK)
