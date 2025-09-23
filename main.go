@@ -27,8 +27,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/HugoSmits86/nativewebp"
 	"github.com/caarlos0/env/v11"
-	"github.com/chai2010/webp"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/helmet"
 	"github.com/gofiber/fiber/v3/middleware/static"
@@ -36,8 +36,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/juls0730/passport/middleware"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/nfnt/resize"
+	_ "modernc.org/sqlite"
 )
 
 //go:embed assets/** templates/** schema.sql
@@ -174,7 +174,7 @@ func NewApp(dbPath string, options map[string]any) (*App, error) {
 		connectionOpts += fmt.Sprintf("%s=%v", k, v)
 	}
 
-	db, err := sql.Open("sqlite3", fmt.Sprintf("%s?%s", dbPath, connectionOpts))
+	db, err := sql.Open("sqlite", fmt.Sprintf("%s?%s", dbPath, connectionOpts))
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +451,7 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 	case "image/png":
 		img, err = png.Decode(srcFile)
 	case "image/webp":
-		img, err = webp.Decode(srcFile)
+		img, err = nativewebp.Decode(srcFile)
 	case "image/svg+xml":
 		// does not fall through (my C brain was tripping over this)
 	default:
@@ -480,8 +480,8 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 		resizedImg := resize.Resize(64, 0, img, resize.MitchellNetravali)
 
 		var buf bytes.Buffer
-		options := &webp.Options{Lossless: true, Quality: 80}
-		if err := webp.Encode(&buf, resizedImg, options); err != nil {
+		options := &nativewebp.Options{}
+		if err := nativewebp.Encode(&buf, resizedImg, options); err != nil {
 			return "", err
 		}
 
@@ -631,11 +631,13 @@ func (manager *CategoryManager) DeleteCategory(id int64) error {
 
 	for _, icon := range icons {
 		if icon == "" {
+			slog.Debug("blank icon")
 			continue
 		}
 
 		if err := os.Remove(filepath.Join("public/", icon)); err != nil {
-			return err
+			// dont error to the user if the icon doesnt exist, just log it
+			slog.Error("Failed to delete icon", "icon", icon, "error", err)
 		}
 	}
 
@@ -713,7 +715,7 @@ func (manager *CategoryManager) DeleteLink(id any) error {
 
 	if icon != "" {
 		if err := os.Remove(filepath.Join("public/", icon)); err != nil {
-			return err
+			slog.Error("Failed to delete icon", "icon", icon, "error", err)
 		}
 	}
 
@@ -778,6 +780,7 @@ func main() {
 	}
 
 	app, err := NewApp(dbPath, map[string]any{
+		"_time_format":  "sqlite",
 		"cache":         "shared",
 		"mode":          "rwc",
 		"_journal_mode": "WAL",
@@ -1090,7 +1093,7 @@ func main() {
 			})
 		})
 
-		api.Delete("/category/:id/link/:linkID", func(c fiber.Ctx) error {
+		api.Delete("/category/:categoryID/link/:linkID", func(c fiber.Ctx) error {
 			linkID, err := strconv.ParseInt(c.Params("linkID"), 10, 64)
 			if err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -1098,7 +1101,7 @@ func main() {
 				})
 			}
 
-			categoryID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+			categoryID, err := strconv.ParseInt(c.Params("categoryID"), 10, 64)
 			if err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 					"message": fmt.Sprintf("Failed to parse category ID: %v", err),
