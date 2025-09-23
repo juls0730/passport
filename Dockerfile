@@ -14,11 +14,12 @@ RUN curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1
 RUN chmod +x tailwindcss-linux-x64
 RUN mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
 
-RUN go generate
-RUN go build -ldflags="-w -s" -o passport 
+RUN go install github.com/juls0730/zqdgr@latest
+
+RUN zqdgr build
 
 # ---- Runtime Stage ----
-FROM gcr.io/distroless/cc-debian12
+FROM gcr.io/distroless/cc-debian12 AS runner
 
 WORKDIR /data
 COPY --from=builder /app/passport /usr/local/bin/passport

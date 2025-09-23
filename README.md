@@ -22,22 +22,30 @@ Passport is a simple, fast, and lightweight web dashboard/new tab replacement.
 Passport is available as a Docker image via this repository. This is the recommended way to run Passport.
 
 ```bash
-docker run -d --name passport -p 3000:3000 -e PASSPORT_ADMIN_USERNAME=admin -e PASSPORT_ADMIN_PASSWORD=password ghcr.io/juls0730/passport:latest
+docker run -d --name passport -p 3000:3000 -v passport_data:/data -e PASSPORT_ADMIN_USERNAME=admin -e PASSPORT_ADMIN_PASSWORD=password ghcr.io/juls0730/passport:latest
 ```
+
+Make sure to change the admin password to something secure. At `/data` is where all of passport's persistent data will be stored, such as image uploads and the sqlite database.
 
 ### Building from source
 
 If you want to build from source, you will need to install the dependencies first.
 
 ```bash
+# note entirely necessary, but strongly recommended
 go install github.com/juls0730/zqdgr@latest
-go install github.com/tailwindlabs/tailwindcss-cli@latest
+
+curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.13/tailwindcss-linux-x64
+chmod +x tailwindcss-linux-x64
+mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
+
+# you may also have to install sqlite3...
 ```
 
 Then you can build the binary.
 
 ```bash
-go build -o passport
+zqdgr build
 ```
 
 You can then run the binary.
