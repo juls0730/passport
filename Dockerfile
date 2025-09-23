@@ -9,6 +9,12 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 
+# tailwindcss needed for go generate
+RUN curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.13/tailwindcss-linux-x64
+RUN chmod +x tailwindcss-linux-x64
+RUN mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
+
+RUN go generate
 RUN go build -ldflags="-w -s" -o passport 
 
 # ---- Runtime Stage ----
