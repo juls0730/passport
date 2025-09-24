@@ -1,179 +1,169 @@
-<header class="flex w-full p-3">
-    <a href="/" class="flex items-center flex-row gap-2 text-white border-b hover:border-transparent justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-            viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
-            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                <path d="m9 14l-4-4l4-4" />
-                <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
-            </g>
-        </svg>
-        Return to home
-    </a>
-</header>
+<div id="blur-target" class="transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-300">
+    <header class="flex w-full p-3">
+        <a href="/"
+            class="flex items-center flex-row gap-2 text-white border-b hover:border-transparent justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                    <path d="m9 14l-4-4l4-4" />
+                    <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
+                </g>
+            </svg>
+            Return to home
+        </a>
+    </header>
 
-<section class="flex justify-center w-full">
-    <div class="w-full sm:w-4/5 p-2.5">
-        {{#each Categories}}
-        <div class="flex items-center" key="category-{{this.ID}}">
-            <img class="object-contain mr-2 select-none" width="32" height="32" draggable="false" alt="{{this.Name}}"
-                src="{{this.Icon}}" />
-            <h2 class="capitalize break-all">{{this.Name}}</h2>
-            <button onclick="deleteCategory({{this.ID}})"
-                class="w-fit h-fit flex p-0.5 bg-[#1C1C21] border-solid border-[#211F23] rounded-md hover:bg-[#29292e] cursor-pointer"><svg
-                    xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-                    <path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
-                </svg></button>
-        </div>
-        <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
-            {{#each this.Links}}
-            <div key="link-{{this.ID}}"
-                class="rounded-2xl bg-[#211F23] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform,translate] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 relative">
-                <img class="mr-2 select-none rounded-md aspect-square object-cover" width="64" height="64"
-                    draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
-                <div class="break-all">
-                    <h3>{{this.Name}}</h3>
-                    <p class="text-[#D7D7D7]">{{this.Description}}</p>
-                </div>
-                <button onclick="deleteLink({{this.ID}}, {{this.CategoryID}})"
-                    class="w-fit h-fit flex p-0.5 bg-[#1C1C21] border-solid border-[#211F23] rounded-md hover:bg-[#29292e] cursor-pointer absolute right-1 top-1"><svg
+    <section class="flex justify-center w-full">
+        <div class="w-full sm:w-4/5 p-2.5">
+            {{#each Categories}}
+            <div class="flex items-center" key="category-{{this.ID}}">
+                <img class="object-contain mr-2 select-none" width="32" height="32" draggable="false"
+                    alt="{{this.Name}}" src="{{this.Icon}}" />
+                <h2 class="capitalize break-all">{{this.Name}}</h2>
+                <button onclick="deleteCategory({{this.ID}})"
+                    class="w-fit h-fit flex p-0.5 bg-[#1C1C21] border-solid border-[#211F23] rounded-md hover:bg-[#29292e] cursor-pointer"><svg
                         xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
                         <path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round"
                             stroke-width="2"
                             d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
                     </svg></button>
             </div>
+            <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
+                {{#each this.Links}}
+                <div key="link-{{this.ID}}"
+                    class="rounded-2xl bg-[#211F23] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform,translate] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 relative">
+                    <img class="mr-2 select-none rounded-md aspect-square object-cover" width="64" height="64"
+                        draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
+                    <div class="break-all">
+                        <h3>{{this.Name}}</h3>
+                        <p class="text-[#D7D7D7]">{{this.Description}}</p>
+                    </div>
+                    <button onclick="deleteLink({{this.ID}}, {{this.CategoryID}})"
+                        class="w-fit h-fit flex p-0.5 bg-[#1C1C21] border-solid border-[#211F23] rounded-md hover:bg-[#29292e] cursor-pointer absolute right-1 top-1"><svg
+                            xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+                        </svg></button>
+                </div>
+                {{/each}}
+                <div onclick="openModal('link', {{this.ID}})"
+                    class="rounded-2xl border border-dashed border-[#656565] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-cursor select-none cursor-pointer">
+                    <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                            stroke-width="2" d="M12 5v14m-7-7h14" />
+                    </svg>
+                    <div>
+                        <h3>Add a link</h3>
+                    </div>
+                </div>
+            </div>
             {{/each}}
-            <div onclick="openLinkModal({{this.ID}})"
-                class="rounded-2xl border border-dashed border-[#656565] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-cursor select-none cursor-pointer">
-                <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+            <div class="flex items-center">
+                <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                     <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                         stroke-width="2" d="M12 5v14m-7-7h14" />
                 </svg>
-                <div>
-                    <h3>Add a link</h3>
-                </div>
+                <h2 onclick="openModal('category')" class="text-[#656565] underline decoration-dashed cursor-pointer">
+                    Add a new category
+                </h2>
             </div>
         </div>
-        {{/each}}
-        <div class="flex items-center">
-            <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 5v14m-7-7h14" />
-            </svg>
-            <h2 onclick="openCategoryModal()" class="text-[#656565] underline decoration-dashed cursor-pointer">
-                Add a new category
-            </h2>
-        </div>
-    </div>
-</section>
-<div id="linkModal"
-    class="flex modal-bg fixed top-0 left-0 bottom-0 right-0 bg-[#00000070] justify-center items-center">
-    <div class="bg-[#151316] rounded-xl overflow-hidden w-fit p-4 modal">
-        <h3>Add A link</h3>
-        <form id="link-form" action="/api/links" method="post"
-            class="flex flex-col gap-y-3 my-2 [&>div]:flex [&>div]:flex-col [&>div]:gap-1">
-            <div>
-                <label for="linkName">Name</label>
-                <input required
-                    class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[#56565b]/30 text-white focus-visible:outline-none transition-colors duration-300 ease-out"
-                    type="text" name="name" placeholder="Name" id="linkName" />
-            </div>
-            <div>
-                <label for="linkDesc">Description (optional)</label>
-                <input
-                    class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[#56565b]/30 text-white focus-visible:outline-none transition-colors duration-300 ease-out"
-                    type="text" name="description" placeholder="Description" id="linkDesc" />
-            </div>
-            <div>
-                <label for="linkURL">URL</label>
-                <input required
-                    class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[#56565b]/30 text-white focus-visible:outline-none transition-colors duration-300 ease-out"
-                    type="url" name="url" placeholder="URL" id="linkURL" />
-            </div>
-            <div>
-                <label for="linkIcon">Icon</label>
-                <input required
-                    class="w-full text-white py-2 px-4 rounded bg-[#1C1C21] border border-[#56565b]/30 transition-colors duration-300 ease-out"
-                    type="file" name="icon" id="linkIcon" accept="image/*" />
-            </div>
-            <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Add link</button>
-        </form>
-        <span id="link-message"></span>
-    </div>
+    </section>
 </div>
-<div id="categoryModal"
+
+<div id="modal-container"
     class="flex modal-bg fixed top-0 left-0 bottom-0 right-0 bg-[#00000070] justify-center items-center">
     <div class="bg-[#151316] rounded-xl overflow-hidden w-fit p-4 modal">
-        <h3>Create A category</h3>
-        <form id="category-form" action="/api/categories" method="post"
-            class="flex flex-col gap-y-3 my-2 [&>div]:flex [&>div]:flex-col [&>div]:gap-1">
-            <div>
-                <label for="categoryName">Name</label>
-                <input
-                    class="px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[#56565b]/30 text-white focus-visible:outline-none"
-                    type="text" name="name" placeholder="Name" id="categoryName" />
-            </div>
-            <div>
-                <label for="linkIcon">Icon</label>
-                <input class="w-full text-white py-2 px-4 rounded bg-[#1C1C21] border border-[#56565b]/30" type="file"
-                    name="icon" id="linkIcon" accept=".svg" />
-            </div>
-            <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Create
-                category</button>
-        </form>
-        <span id="category-message"></span>
+        <div id="category-contents" class="hidden">
+            <h3>Create A category</h3>
+            <form id="category-form" action="/api/categories" method="post"
+                class="flex flex-col gap-y-3 my-2 [&>div]:flex [&>div]:flex-col [&>div]:gap-1">
+                <div>
+                    <label for="categoryName">Name</label>
+                    <input required type="text" name="name" id="categoryName" />
+                </div>
+                <div>
+                    <label for="linkIcon">Icon</label>
+                    <input type="file" name="icon" id="linkIcon" accept=".svg" required />
+                </div>
+                <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Create
+                    category</button>
+            </form>
+            <span id="category-message"></span>
+        </div>
+
+        <div id="link-contents" class="hidden">
+            <h3>Add A link</h3>
+            <form id="link-form" action="/api/links" method="post"
+                class="flex flex-col gap-y-3 my-2 [&>div]:flex [&>div]:flex-col [&>div]:gap-1">
+                <div>
+                    <label for="linkName">Name</label>
+                    <input required type="text" name="name" id="linkName" />
+                </div>
+                <div>
+                    <label for="linkDesc">Description (optional)</label>
+                    <input type="text" name="description" id="linkDesc" />
+                </div>
+                <div>
+                    <label for="linkURL">URL</label>
+                    <input required type="url" name="url" id="linkURL" />
+                </div>
+                <div>
+                    <label for="linkIcon">Icon</label>
+                    <input required type="file" name="icon" id="linkIcon" accept="image/*" />
+                </div>
+                <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Add
+                    link</button>
+            </form>
+            <span id="link-message"></span>
+        </div>
     </div>
 </div>
 
 <script>
     // idfk what this variable capitalization is, it's a mess
-    let linkModalBg = document.getElementById("linkModal");
-    let linkModal = linkModalBg.querySelector("div");
-    let categoryModalBg = document.getElementById("categoryModal");
-    let categoryModal = categoryModalBg.querySelector("div");
-    let pageElement = document.querySelector("section");
+    let modalContainer = document.getElementById("modal-container");
+    let modal = modalContainer.querySelector("div");
+    let pageElement = document.getElementById("blur-target");
     let targetCategoryID = null;
+    let activeModal = null;
 
-    function openCategoryModal() {
-        pageElement.style.filter = "blur(20px)";
-        document.getElementById("category-form").reset();
-
-        categoryModalBg.classList.add("is-visible");
-        categoryModal.classList.add("is-visible");
-    }
-
-    function closeCategoryModal() {
-        pageElement.style.filter = "";
-
-        categoryModalBg.classList.remove("is-visible");
-        categoryModal.classList.remove("is-visible");
-
-        document.getElementById("category-form").querySelectorAll("[required]").forEach((el) => {
-            el.classList.remove("invalid:border-[#861024]");
-        });
-    }
-
-    function openLinkModal(categoryID) {
+    function openModal(modalKind, categoryID) {
+        activeModal = modalKind;
         targetCategoryID = categoryID;
 
         pageElement.style.filter = "blur(20px)";
-        document.getElementById("link-form").reset();
+        document.getElementById(modalKind + "-contents").classList.remove("hidden");
 
-        linkModalBg.classList.add("is-visible");
-        linkModal.classList.add("is-visible");
+        modalContainer.classList.add("is-visible");
+        modal.classList.add("is-visible");
+        document.getElementById(modalKind + "-form").reset();
     }
 
-    function closeLinkModal() {
+    function closeModal() {
         pageElement.style.filter = "";
 
-        linkModalBg.classList.remove("is-visible");
-        linkModal.classList.remove("is-visible");
+        modalContainer.classList.remove("is-visible");
+        modal.classList.remove("is-visible");
 
-        document.getElementById("link-form").querySelectorAll("[required]").forEach((el) => {
-            el.classList.remove("invalid:border-[#861024]");
+        setTimeout(() => {
+            document.getElementById(activeModal + "-contents").classList.add("hidden");
+            activeModal = null;
+        }, 300)
+
+        document.getElementById(activeModal + "-form").querySelectorAll("[required]").forEach((el) => {
+            el.classList.remove("invalid:border-[#861024]!");
         });
+
+        targetCategoryID = null;
     }
+
+    modalContainer.addEventListener("click", (event) => {
+        if (event.target === modalContainer) {
+            closeModal();
+        }
+    });
 
     async function deleteLink(linkID, categoryID) {
         let res = await fetch(`/api/category/${categoryID}/link/${linkID}`, {
@@ -202,7 +192,7 @@
 
     document.getElementById("link-form").querySelector("button").addEventListener("click", (event) => {
         document.getElementById("link-form").querySelectorAll("[required]").forEach((el) => {
-            el.classList.add("invalid:border-[#861024]");
+            el.classList.add("invalid:border-[#861024]!");
         });
     });
 
@@ -216,7 +206,7 @@
         });
 
         if (res.status === 201) {
-            closeLinkModal();
+            closeModal('link');
             document.getElementById("link-form").reset();
             location.reload();
         } else {
@@ -227,7 +217,7 @@
 
     document.getElementById("category-form").querySelector("button").addEventListener("click", (event) => {
         document.getElementById("category-form").querySelectorAll("[required]").forEach((el) => {
-            el.classList.add("invalid:border-[#861024]");
+            el.classList.add("invalid:border-[#861024]!");
         });
     });
 
@@ -241,26 +231,12 @@
         });
 
         if (res.status === 201) {
-            closeCategoryModal()
+            closeModal('category');
             document.getElementById("category-form").reset();
             location.reload();
         } else {
             let json = await res.json();
             document.getElementById("link-message").innerText = json.message;
-        }
-    });
-
-    linkModalBg.addEventListener("click", (event) => {
-        if (event.target === linkModalBg) {
-            targetCategoryID = null;
-            closeLinkModal();
-        }
-    });
-
-    categoryModalBg.addEventListener("click", (event) => {
-        if (event.target === categoryModalBg) {
-            targetCategoryID = null;
-            closeCategoryModal();
         }
     });
 </script>
