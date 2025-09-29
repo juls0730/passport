@@ -1,5 +1,5 @@
-<main class="flex justify-center items-center h-screen relative bg-[#0E0A0E]">
-    <div class="flex bg-[#151316] rounded-xl overflow-hidden">
+<main class="flex justify-center items-center h-screen relative bg-base">
+    <div class="flex bg-surface rounded-xl overflow-hidden">
         <img src="/assets/leaves.webp" class="h-96 w-64 object-cover" />
         <div class="flex flex-col p-4 text-center">
             <h2 class="text-2xl">
@@ -8,8 +8,7 @@
             <form action="/admin/login" method="post" class="flex flex-col gap-y-3 my-2">
                 <input type="text" name="username" placeholder="Username" />
                 <input type="password" name="password" placeholder="Password" />
-                <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0"
-                    type="submit">Login</button>
+                <button class="px-4 py-2 rounded-md w-full bg-accent text-white border-0" type="submit">Login</button>
             </form>
             <span id="message"></span>
         </div>

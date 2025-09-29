@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+
+@theme {
+    --color-accent: oklch(57.93% 0.258 294.12);
+    --color-success: oklch(70.19% 0.158 160.44);
+    --color-error: oklch(63.43% 0.251 28.48);
+
+    --color-base: oklch(11% .007 285);
+    --color-surface: oklch(19% 0.007 314.66);
+    --color-overlay: oklch(26% 0.008 314.66);
+
+    --color-muted: oklch(63% 0.015 286);
+    --color-subtle: oklch(72% 0.015 286);
+    --color-text: oklch(87% 0.015 286);
+
+    --color-highlight-sm: oklch(30.67% 0.007 286);
+    --color-highlight: oklch(39.26% 0.010 286);
+    --color-highlight-lg: oklch(47.72% 0.011 286);
+}
+
 @font-face {
     font-family: "Instrument Sans";
     src: url("/assets/fonts/InstrumentSans-VariableFont_wdth,wght.woff2") format("woff2");
@@ -13,6 +32,7 @@
 html {
     line-height: normal;
     color-scheme: dark;
+    color: var(--color-text);
 }
 
 h1,
@@ -36,14 +56,72 @@ h3 {
     font-size: 1.25rem;
 }
 
+button {
+    cursor: pointer;
+}
+
 input:not(.search) {
-    @apply px-4 py-2 rounded-md w-full bg-[#1C1C21] border border-[#2E2E32] placeholder:text-[#8A8E90] text-white focus-visible:outline-none transition-colors duration-300 ease-out overflow-hidden;
+    @apply px-4 py-2 rounded-md w-full bg-surface border border-highlight-sm/70 placeholder:text-highlight text-text focus-visible:outline-none transition-colors duration-300 ease-out overflow-hidden;
     
     &[type="file"] {
         @apply p-0 cursor-pointer;
 
         &::file-selector-button {
-            @apply px-2 py-2 mr-1 bg-[hsl(240,6%,18%)] text-white cursor-pointer;
+            @apply px-2 py-2 mr-1 bg-highlight text-subtle cursor-pointer;
         }
     }
+}
+
+.link-card {
+    background: var(--color-overlay);
+    display: flex;
+    flex-direction: row;
+    text-decoration: none;
+    border-radius: 1rem;
+    padding: 0.625rem;
+    align-items: center;
+    transition-property: box-shadow, transform, translate;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+
+    &:hover {
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        transform: translateY(-4px);
+    }
+
+    &:active {
+        box-shadow: 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        transform: translateY(2px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .link-card {
+        transition: none;
+
+        &:hover {
+            transform: none;
+        }
+
+        &:active {
+            transform: none;
+        }
+    }
+}
+
+.link-card img {
+    margin-right: 0.5rem;
+    user-select: none;
+    border-radius: 0.375rem;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+}
+
+.link-card div {
+    word-break: break-all;
+}
+
+.link-card div p {
+    color: var(--color-subtle);
 }

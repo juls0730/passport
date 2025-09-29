@@ -1,8 +1,8 @@
-<main class="grid grid-rows-3 grid-cols-[1fr] justify-center items-center h-screen bg-[#0E0A0E]">
+<main class="grid grid-rows-3 grid-cols-[1fr] justify-center items-center h-screen bg-base">
     <div class="flex h-full p-2.5 justify-between">
         <div>
             {{#if WeatherData}}
-            <div class="text-[#BABABA] flex items-center">
+            <div class="text-subtle flex items-center">
                 <span class="mr-2 flex items-center">
                     {{{WeatherData.Icon}}}
                 </span>
@@ -15,20 +15,25 @@
         </div>
         <div>
             {{#if UptimeData}}
-            <div class="text-[#BABABA] flex items-end flex-col">
+            <div class="text-subtle flex items-end flex-col">
                 {{#each UptimeData}}
                 <div class="flex items-center">
                     <span class="mr-2 flex items-center">
                         {{{this.FriendlyName}}}
                     </span>
-                    <div class="relative my-auto">
-                        {{#if (eq this.Status 2)}}
-                        <span class="absolute w-2 h-2 rounded-full bg-emerald-400 animate-ping block"></span>
-                        <span class="relative w-2 h-2 rounded-full bg-emerald-500 block"></span>
-                        {{else}}
-                        <span class="absolute w-2 h-2 rounded-full bg-rose-400 animate-ping block"></span>
-                        <span class="relative w-2 h-2 rounded-full bg-rose-500 block"></span>
-                        {{/if}}
+                    <div class="relative my-auto size-2">
+                        <div class="relative my-auto size-2 flex-shrink-0 flex-grow-0">
+                            <svg class="absolute w-full h-full animate-ping" viewBox="0 0 10 10">
+                                <circle cx="5" cy="5" r="5"
+                                    class="fill-current {{#if (eq this.Status 2)}} text-success {{else}} text-error {{/if}}">
+                                </circle>
+                            </svg>
+                            <svg class="relative w-full h-full" viewBox="0 0 10 10">
+                                <circle cx="5" cy="5" r="5"
+                                    class="fill-current {{#if (eq this.Status 2)}} text-success {{else}} text-error {{/if}}">
+                                </circle>
+                            </svg>
+                        </div>
                     </div>
                 </div>
                 {{/each}}
@@ -62,12 +67,12 @@
         </div>
         <form class="w-full max-w-3xl" action="{{ SearchProviderURL }}" method="GET">
             <input name="{{ SearchParam }}" aria-label="Search bar"
-                class="w-full bg-[#1C1C21] border border-[#2E2E32] rounded-full px-3 py-1 text-white h-7 focus-visible:outline-none placeholder:italic placeholder:text-[#434343] search"
+                class="w-full bg-surface border border-highlight-sm/70 rounded-full px-3 py-1 text-white h-7 focus-visible:outline-none placeholder:italic placeholder:text-highlight search"
                 placeholder="Search..." />
         </form>
     </div>
 </main>
-<section class="flex justify-center w-full">
+<section class="flex justify-center w-full bg-surface">
     <div class="w-full sm:w-4/5 p-2.5">
         {{#each Categories}}
         <div class="flex items-center mt-2 first:mt-0">
@@ -76,18 +81,16 @@
             <h2 class="capitalize break-all">{{this.Name}}</h2>
         </div>
         <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
-            {{#each this.Links}} <a href="{{this.URL}}"
-                class="underline-none text-unset rounded-2xl bg-[#211F23] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform,translate] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1"
-                draggable="false" target="_blank" rel="noopener noreferrer">
-                <img class="mr-2 select-none rounded-md aspect-square object-cover" width="64" height="64"
-                    draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
-                <div class="break-all">
+            {{#each this.Links}} <a href="{{this.URL}}" class="link-card" draggable="false" target="_blank"
+                rel="noopener noreferrer">
+                <img width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
+                <div>
                     <h3>{{this.Name}}</h3>
-                    <p class="text-[#D7D7D7]">{{this.Description}}</p>
+                    <p>{{this.Description}}</p>
                 </div>
             </a>
             {{else}}
-            <p class="text-[#D7D7D7]">No links here, add one!</p>
+            <p class="text-subtle">No links here, add one!</p>
             {{/each}}
         </div>
         {{/each}}

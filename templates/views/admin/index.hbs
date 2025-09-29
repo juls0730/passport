@@ -1,4 +1,5 @@
-<div id="blur-target" class="transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-300">
+<div id="blur-target"
+    class="transition-[filter] motion-reduce:transition-none ease-[cubic-bezier(0.45,0,0.55,1)] duration-300">
     <header class="flex w-full p-3">
         <a href="/"
             class="flex items-center flex-row gap-2 text-white border-b hover:border-transparent justify-center">
@@ -21,7 +22,7 @@
                     alt="{{this.Name}}" src="{{this.Icon}}" />
                 <h2 class="capitalize break-all">{{this.Name}}</h2>
                 <button onclick="deleteCategory({{this.ID}})"
-                    class="w-fit h-fit flex p-0.5 bg-[#1C1C21] border-solid border-[#211F23] rounded-md hover:bg-[#29292e] cursor-pointer"><svg
+                    class="w-fit h-fit flex p-0.5 bg-base border border-highlight rounded-md hover:filter hover:brightness-125 cursor-pointer"><svg
                         xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
                         <path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round"
                             stroke-width="2"
@@ -30,16 +31,14 @@
             </div>
             <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
                 {{#each this.Links}}
-                <div key="link-{{this.ID}}"
-                    class="rounded-2xl bg-[#211F23] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform,translate] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 relative">
-                    <img class="mr-2 select-none rounded-md aspect-square object-cover" width="64" height="64"
-                        draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
-                    <div class="break-all">
+                <div key="link-{{this.ID}}" class="link-card relative">
+                    <img width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
+                    <div>
                         <h3>{{this.Name}}</h3>
-                        <p class="text-[#D7D7D7]">{{this.Description}}</p>
+                        <p>{{this.Description}}</p>
                     </div>
                     <button onclick="deleteLink({{this.ID}}, {{this.CategoryID}})"
-                        class="w-fit h-fit flex p-0.5 bg-[#1C1C21] border-solid border-[#211F23] rounded-md hover:bg-[#29292e] cursor-pointer absolute right-1 top-1"><svg
+                        class="w-fit h-fit flex p-0.5 bg-base border border-highlight/70 rounded-md hover:filter hover:brightness-125 cursor-pointer absolute right-1 top-1"><svg
                             xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
                             <path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round"
                                 stroke-width="2"
@@ -48,7 +47,7 @@
                 </div>
                 {{/each}}
                 <div onclick="openModal('link', {{this.ID}})"
-                    class="rounded-2xl border border-dashed border-[#656565] p-2.5 flex flex-row items-center shadow-md hover:shadow-xl transition-[shadow,transform] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-cursor select-none cursor-pointer">
+                    class="rounded-2xl border border-dashed border-subtle p-2.5 flex flex-row items-center hover:underline transition-[box-shadow,transform] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 pointer-cursor select-none cursor-pointer">
                     <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
                         <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                             stroke-width="2" d="M12 5v14m-7-7h14" />
@@ -64,7 +63,7 @@
                     <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                         stroke-width="2" d="M12 5v14m-7-7h14" />
                 </svg>
-                <h2 onclick="openModal('category')" class="text-[#656565] underline decoration-dashed cursor-pointer">
+                <h2 onclick="openModal('category')" class="text-subtle underline decoration-dashed cursor-pointer">
                     Add a new category
                 </h2>
             </div>
@@ -73,8 +72,8 @@
 </div>
 
 <div id="modal-container"
-    class="flex modal-bg fixed top-0 left-0 bottom-0 right-0 bg-[#00000070] justify-center items-center">
-    <div class="bg-[#151316] rounded-xl overflow-hidden w-fit p-4 modal">
+    class="flex modal-bg fixed top-0 left-0 bottom-0 right-0 bg-black/45 justify-center items-center">
+    <div class="bg-overlay rounded-xl overflow-hidden w-full p-4 modal max-w-sm">
         <div id="category-contents" class="hidden">
             <h3>Create A category</h3>
             <form id="category-form" action="/api/categories" method="post"
@@ -87,7 +86,7 @@
                     <label for="linkIcon">Icon</label>
                     <input type="file" name="icon" id="linkIcon" accept=".svg" required />
                 </div>
-                <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Create
+                <button class="px-4 py-2 rounded-md w-full bg-accent text-white border-0" type="submit">Create
                     category</button>
             </form>
             <span id="category-message"></span>
@@ -113,7 +112,7 @@
                     <label for="linkIcon">Icon</label>
                     <input required type="file" name="icon" id="linkIcon" accept="image/*" />
                 </div>
-                <button class="px-4 py-2 rounded-md w-full bg-[#8A42FF] text-white border-0" type="submit">Add
+                <button class="px-4 py-2 rounded-md w-full bg-accent text-white border-0" type="submit">Add
                     link</button>
             </form>
             <span id="link-message"></span>
@@ -245,28 +244,49 @@
     .modal-bg {
         visibility: hidden;
         opacity: 0;
-        transition: opacity 0.3s ease, visibility 0s 0.3s;
-        transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
     }
 
     .modal-bg.is-visible {
         visibility: visible;
         opacity: 1;
-        transition-delay: 0s;
     }
 
     .modal {
         opacity: 0;
-        transform: translateY(20px) scale(0.95);
-
-        transition: opacity 0.3s ease, transform 0.3s ease;
-        transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
     }
 
     .modal.is-visible {
         opacity: 1;
-        visibility: visible;
-        transform: translateY(0) scale(1);
-        transition-delay: 0s;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .modal-bg {
+            visibility: hidden;
+            opacity: 0;
+
+            transition: opacity 0.3s ease, visibility 0s 0.3s;
+            transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+        }
+
+        .modal-bg.is-visible {
+            visibility: visible;
+            opacity: 1;
+            transition-delay: 0s;
+        }
+
+        .modal {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+        }
+
+        .modal.is-visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+            transition-delay: 0s;
+        }
     }
 </style>
