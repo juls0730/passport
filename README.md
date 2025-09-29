@@ -58,8 +58,6 @@ You can then run the binary.
 | -------------------------------------- | ------------------------------------------------------------------------------- | -------- | ------- |
 | `PASSPORT_DEV_MODE`                    | Enables dev mode                                                                | false    | false   |
 | `PASSPORT_ENABLE_PREFORK`              | Enables preforking                                                              | false    | false   |
-| `PASSPORT_ENABLE_WEATHER`              | Enables weather data, see [Weather configuration](#weather-configuration)       | false    | false   |
-| `PASSPORT_ENABLE_UPTIME`               | Enables uptime data, see [Uptime configuration](#uptime-configuration)          | false    | false   |
 | `PASSPORT_ADMIN_USERNAME`              | The username for the admin dashboard                                            | true     |
 | `PASSPORT_ADMIN_PASSWORD`              | The password for the admin dashboard                                            | true     |
 | `PASSPORT_SEARCH_PROVIDER`             | The search provider to use for the search bar, without any query parameters     | true     |
@@ -67,25 +65,25 @@ You can then run the binary.
 
 #### Weather configuration
 
-The following only applies if you are using the OpenWeather integration.
+The weather integration is optional, and will be enabled automatically if you provide an API key. The following only applies if you are using the OpenWeatherMap integration.
 
-| Environment Variable          | Description                                                               | Required | Default        |
-| ----------------------------- | ------------------------------------------------------------------------- | -------- | -------------- |
-| `OPENWEATHER_PROVIDER`        | The weather provider to use, currently only `openweathermap` is supported | true     | openweathermap |
-| `OPENWEATHER_API_KEY`         | The OpenWeather API key                                                   | true     |                |
-| `OPENWEATHER_TEMP_UNITS`      | The temperature units to use, either `metric` or `imperial`               | false    | metric         |
-| `OPENWEATHER_LAT`             | The latitude of your location                                             | true     |                |
-| `OPENWEATHER_LON`             | The longitude of your location                                            | true     |                |
-| `OPENWEATHER_UPDATE_INTERVAL` | The interval in minutes to update the weather data                        | false    | 15             |
+| Environment Variable      | Description                                                               | Required | Default        |
+| ------------------------- | ------------------------------------------------------------------------- | -------- | -------------- |
+| `WEATHER_PROVIDER`        | The weather provider to use, currently only `openweathermap` is supported | false    | openweathermap |
+| `WEATHER_API_KEY`         | The OpenWeather API key                                                   | true     |                |
+| `WEATHER_TEMP_UNITS`      | The temperature units to use, either `metric` or `imperial`               | false    | metric         |
+| `WEATHER_LAT`             | The latitude of your location                                             | true     |                |
+| `WEATHER_LON`             | The longitude of your location                                            | true     |                |
+| `WEATHER_UPDATE_INTERVAL` | The interval in minutes to update the weather data                        | false    | 15             |
 
 #### Uptime configuration
 
-The following only applies if you are using the UptimeRobot integration.
+The uptime integration is optional, and will be enabled automatically if you provide an API key. The following only applies if you are using the UptimeRobot integration.
 
-| Environment Variable          | Description                                       | Required | Default |
-| ----------------------------- | ------------------------------------------------- | -------- | ------- |
-| `UPTIMEROBOT_API_KEY`         | The UptimeRobot API key                           | true     |         |
-| `UPTIMEROBOT_UPDATE_INTERVAL` | The interval in seconds to update the uptime data | false    | 300     |
+| Environment Variable     | Description                                       | Required | Default |
+| ------------------------ | ------------------------------------------------- | -------- | ------- |
+| `UPTIME_API_KEY`         | The UptimeRobot API key                           | true     |         |
+| `UPTIME_UPDATE_INTERVAL` | The interval in seconds to update the uptime data | false    | 300     |
 
 ### Adding links and categories
 

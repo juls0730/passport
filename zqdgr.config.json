@@ -10,9 +10,9 @@
         "url": "https://github.com/juls0730/passport.git"
     },
     "scripts": {
-        "dev": "go generate; PASSPORT_DEV_MODE=true go run main.go",
-        "build": "go generate && go build -tags netgo,prod -ldflags=\"-w -s\" -o passport"
+        "dev": "go generate ./src/; PASSPORT_DEV_MODE=true go run src/main.go",
+        "build": "go generate ./src/ && go build -tags netgo,prod -ldflags=\"-w -s\" -o passport"
     },
-    "pattern": "**/*.go,templates/**/*.hbs,styles/**/*.css,assets/**/*.{svg,png,jpg,jpeg,webp,woff2,ttf,otf,eot,ico,gif,webp}",
+    "pattern": "src/**/*.{go,hbs,css,svg,png,jpg,jpeg,webp,woff2,ico,webp}",
     "shutdown_signal": "SIGINT"
 }

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"database/sql"
 	"embed"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"image"
@@ -23,7 +22,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -35,8 +33,9 @@ import (
 	"github.com/gofiber/template/handlebars/v2"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	"github.com/juls0730/passport/middleware"
-	"github.com/nfnt/resize"
+	"github.com/juls0730/passport/src/middleware"
+	"github.com/juls0730/passport/src/services"
+	"golang.org/x/image/draw"
 	_ "modernc.org/sqlite"
 )
 
@@ -70,37 +69,15 @@ var (
 	insertLinkStmt     *sql.Stmt
 )
 
-type WeatherProvider string
-
-const (
-	OpenWeatherMap WeatherProvider = "openweathermap"
-)
-
-type WeatherConfig struct {
-	Provider    WeatherProvider `env:"OPENWEATHER_PROVIDER" envDefault:"openweathermap"`
-	OpenWeather struct {
-		APIKey string  `env:"OPENWEATHER_API_KEY"`
-		Units  string  `env:"OPENWEATHER_TEMP_UNITS" envDefault:"metric"`
-		Lat    float64 `env:"OPENWEATHER_LAT"`
-		Lon    float64 `env:"OPENWEATHER_LON"`
-	}
-	UpdateInterval int `env:"OPENWEATHER_UPDATE_INTERVAL" envDefault:"15"`
-}
-
-type UptimeConfig struct {
-	APIKey         string `env:"UPTIMEROBOT_API_KEY"`
-	UpdateInterval int    `env:"UPTIMEROBOT_UPDATE_INTERVAL" envDefault:"300"`
-}
-
 type Config struct {
 	DevMode bool `env:"PASSPORT_DEV_MODE" envDefault:"false"`
 	Prefork bool `env:"PASSPORT_ENABLE_PREFORK" envDefault:"false"`
 
-	WeatherEnabled bool `env:"PASSPORT_ENABLE_WEATHER" envDefault:"false"`
-	Weather        *WeatherConfig
+	WeatherAPIKey string `env:"PASSPORT_WEATHER_API_KEY"`
+	Weather       *services.WeatherConfig
 
-	UptimeEnabled bool `env:"PASSPORT_ENABLE_UPTIME" envDefault:"false"`
-	Uptime        *UptimeConfig
+	UptimeAPIKey string `env:"PASSPORT_UPTIME_API_KEY"`
+	Uptime       *services.UptimeConfig
 
 	Admin struct {
 		Username string `env:"PASSPORT_ADMIN_USERNAME"`
@@ -110,6 +87,11 @@ type Config struct {
 	SearchProvider struct {
 		URL   string `env:"PASSPORT_SEARCH_PROVIDER"`
 		Query string `env:"PASSPORT_SEARCH_PROVIDER_QUERY_PARAM" envDefault:"q"`
+	}
+
+	Depricated struct {
+		WeatherEnabled bool `env:"PASSPORT_ENABLE_WEATHER" envDefault:"false"`
+		UptimeEnabled  bool `env:"PASSPORT_ENABLE_UPTIME" envDefault:"false"`
 	}
 }
 
@@ -121,18 +103,46 @@ func ParseConfig() (*Config, error) {
 		return nil, err
 	}
 
-	if config.WeatherEnabled {
-		config.Weather = &WeatherConfig{}
+	if config.WeatherAPIKey != "" {
+		config.Weather = &services.WeatherConfig{
+			APIKey: config.WeatherAPIKey,
+		}
 		if err := env.Parse(config.Weather); err != nil {
 			return nil, err
 		}
+	} else if config.Depricated.WeatherEnabled {
+		slog.Warn("Your configuration file contains depricated Weather settings. Please update your configuration file!")
+		depricatedWeatherConfig := &services.DepricatedWeatherConfig{}
+		if err := env.Parse(depricatedWeatherConfig); err != nil {
+			return nil, err
+		}
+
+		config.Weather = &services.WeatherConfig{}
+		config.Weather.Provider = depricatedWeatherConfig.OpenWeather.Provider
+		config.Weather.APIKey = depricatedWeatherConfig.OpenWeather.APIKey
+		config.Weather.Units = depricatedWeatherConfig.OpenWeather.Units
+		config.Weather.Lat = depricatedWeatherConfig.OpenWeather.Lat
+		config.Weather.Lon = depricatedWeatherConfig.OpenWeather.Lon
+		config.Weather.UpdateInterval = depricatedWeatherConfig.UpdateInterval
 	}
 
-	if config.UptimeEnabled {
-		config.Uptime = &UptimeConfig{}
+	if config.UptimeAPIKey != "" {
+		config.Uptime = &services.UptimeConfig{
+			APIKey: config.UptimeAPIKey,
+		}
 		if err := env.Parse(config.Uptime); err != nil {
 			return nil, err
 		}
+	} else if config.Depricated.UptimeEnabled {
+		slog.Warn("Your configuration file contains depricated Uptime settings. Please update your configuration file!")
+		depricatedUptimeConfig := &services.DepricatedUptimeConfig{}
+		if err := env.Parse(depricatedUptimeConfig); err != nil {
+			return nil, err
+		}
+
+		config.Uptime = &services.UptimeConfig{}
+		config.Uptime.APIKey = depricatedUptimeConfig.APIKey
+		config.Uptime.UpdateInterval = depricatedUptimeConfig.UpdateInterval
 	}
 
 	return &config, nil
@@ -141,8 +151,8 @@ func ParseConfig() (*Config, error) {
 type App struct {
 	*Config
 	*CategoryManager
-	*WeatherCache
-	*UptimeManager
+	*services.WeatherManager
+	*services.UptimeManager
 	db *sql.DB
 }
 
@@ -199,242 +209,56 @@ func NewApp(dbPath string, options map[string]any) (*App, error) {
 		return nil, err
 	}
 
-	var weatherCache *WeatherCache
-	if config.WeatherEnabled {
-		weatherCache = NewWeatherCache(config.Weather)
+	var weatherCache *services.WeatherManager
+	if config.WeatherAPIKey != "" {
+		weatherCache = services.NewWeatherManager(config.Weather)
 	}
 
-	var uptimeManager *UptimeManager
-	if config.UptimeEnabled {
-		uptimeManager = NewUptimeManager(config.Uptime)
+	var uptimeManager *services.UptimeManager
+	if config.UptimeAPIKey != "" {
+		uptimeManager = services.NewUptimeManager(config.Uptime)
 	}
 
 	return &App{
 		Config:          config,
-		WeatherCache:    weatherCache,
+		WeatherManager:  weatherCache,
 		CategoryManager: categoryManager,
 		UptimeManager:   uptimeManager,
 		db:              db,
 	}, nil
 }
 
-type UptimeRobotSite struct {
-	FriendlyName string `json:"friendly_name"`
-	Url          string `json:"url"`
-	Status       int    `json:"status"`
-}
-
-type UptimeManager struct {
-	sites          []UptimeRobotSite
-	lastUpdate     time.Time
-	mutex          sync.RWMutex
-	updateChan     chan struct{}
-	updateInterval int
-	apiKey         string
-}
-
-func NewUptimeManager(config *UptimeConfig) *UptimeManager {
-	if config.APIKey == "" {
-		log.Fatalln("UptimeRobot API Key is required!")
-		return nil
+func CropToCenter(img image.Image, outputSize int) (image.Image, error) {
+	if img == nil {
+		return nil, fmt.Errorf("input image is nil")
+	}
+	if outputSize <= 0 {
+		return nil, fmt.Errorf("output size must be positive")
 	}
 
-	updateInterval := config.UpdateInterval
-	if updateInterval < 1 {
-		updateInterval = 300
+	srcBounds := img.Bounds()
+	srcWidth := srcBounds.Dx()
+	srcHeight := srcBounds.Dy()
+
+	squareSide := min(srcWidth, srcHeight)
+
+	cropX := (srcWidth - squareSide) / 2
+	cropY := (srcHeight - squareSide) / 2
+
+	srcCropRect := image.Rect(cropX, cropY, cropX+squareSide, cropY+squareSide)
+
+	croppedSquareImg := image.NewRGBA(image.Rect(0, 0, squareSide, squareSide))
+	draw.Draw(croppedSquareImg, croppedSquareImg.Rect, img, srcCropRect.Min, draw.Src)
+
+	if squareSide == outputSize {
+		return croppedSquareImg, nil
 	}
 
-	uptimeManager := &UptimeManager{
-		updateChan:     make(chan struct{}),
-		updateInterval: updateInterval,
-		apiKey:         config.APIKey,
-		sites:          []UptimeRobotSite{},
-	}
+	outputImg := image.NewRGBA(image.Rect(0, 0, outputSize, outputSize))
 
-	go uptimeManager.updateWorker()
+	draw.CatmullRom.Scale(outputImg, outputImg.Rect, croppedSquareImg, croppedSquareImg.Bounds(), draw.Src, nil)
 
-	uptimeManager.updateChan <- struct{}{}
-
-	return uptimeManager
-}
-
-func (u *UptimeManager) getUptime() []UptimeRobotSite {
-	u.mutex.RLock()
-	defer u.mutex.RUnlock()
-	return u.sites
-}
-
-func (u *UptimeManager) updateWorker() {
-	ticker := time.NewTicker(time.Duration(u.updateInterval) * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-u.updateChan:
-			u.update()
-		case <-ticker.C:
-			u.update()
-		}
-	}
-}
-
-type UptimeRobotResponse struct {
-	Monitors []UptimeRobotSite `json:"monitors"`
-}
-
-func (u *UptimeManager) update() {
-	resp, err := http.Post("https://api.uptimerobot.com/v2/getMonitors?api_key="+u.apiKey, "application/json", nil)
-	if err != nil {
-		fmt.Printf("Error fetching uptime data: %v\n", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Printf("Error reading response: %v\n", err)
-		return
-	}
-
-	var monitors UptimeRobotResponse
-	if err := json.Unmarshal(body, &monitors); err != nil {
-		fmt.Printf("Error parsing uptime data: %v\n", err)
-		return
-	}
-
-	u.mutex.Lock()
-	u.sites = monitors.Monitors
-	u.lastUpdate = time.Now()
-	u.mutex.Unlock()
-}
-
-type OpenWeatherResponse struct {
-	Weather []struct {
-		Name   string `json:"main"`
-		IconId string `json:"icon"`
-	} `json:"weather"`
-	Main struct {
-		Temp float64 `json:"temp"`
-	} `json:"main"`
-	Code    int    `json:"cod"`
-	Message string `json:"message"`
-}
-
-type WeatherData struct {
-	Temperature float64
-	WeatherText string
-	Icon        string
-}
-
-type WeatherCache struct {
-	data           *WeatherData
-	lastUpdate     time.Time
-	mutex          sync.RWMutex
-	updateChan     chan struct{}
-	tempUnits      string
-	updateInterval int
-	apiKey         string
-	lat            float64
-	lon            float64
-}
-
-func NewWeatherCache(config *WeatherConfig) *WeatherCache {
-	if config.Provider != OpenWeatherMap {
-		log.Fatalln("Only OpenWeatherMap is supported!")
-		return nil
-	}
-
-	if config.OpenWeather.APIKey == "" {
-		log.Fatalln("An API Key required for OpenWeather!")
-		return nil
-	}
-
-	updateInterval := config.UpdateInterval
-	if updateInterval < 1 {
-		updateInterval = 15
-	}
-
-	units := config.OpenWeather.Units
-	if units == "" {
-		units = "metric"
-	}
-
-	cache := &WeatherCache{
-		data:           &WeatherData{},
-		updateChan:     make(chan struct{}),
-		tempUnits:      units,
-		updateInterval: updateInterval,
-		apiKey:         config.OpenWeather.APIKey,
-		lat:            config.OpenWeather.Lat,
-		lon:            config.OpenWeather.Lon,
-	}
-
-	go cache.weatherWorker()
-
-	cache.updateChan <- struct{}{}
-
-	return cache
-}
-
-func (c *WeatherCache) GetWeather() WeatherData {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-	return *c.data
-}
-
-func (c *WeatherCache) weatherWorker() {
-	ticker := time.NewTicker(time.Duration(c.updateInterval) * time.Minute)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-c.updateChan:
-			c.updateWeather()
-		case <-ticker.C:
-			c.updateWeather()
-		}
-	}
-}
-
-func (c *WeatherCache) updateWeather() {
-	url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?lat=%f&lon=%f&appid=%s&units=%s",
-		c.lat, c.lon, c.apiKey, c.tempUnits)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("Error fetching weather: %v\n", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Printf("Error reading response: %v\n", err)
-		return
-	}
-
-	var weatherResp OpenWeatherResponse
-	if err := json.Unmarshal(body, &weatherResp); err != nil {
-		fmt.Printf("Error parsing weather data: %v\n", err)
-		return
-	}
-
-	// if the request failed
-	if weatherResp.Code != 200 {
-		// if there is no pre-existing data in the cache
-		if c.data.WeatherText == "" {
-			log.Fatalf("Fetching the weather data failed!\n%s\n", weatherResp.Message)
-		} else {
-			return
-		}
-	}
-
-	c.mutex.Lock()
-	c.data.Temperature = weatherResp.Main.Temp
-	c.data.WeatherText = weatherResp.Weather[0].Name
-	c.data.Icon = weatherResp.Weather[0].IconId
-	c.lastUpdate = time.Now()
-	c.mutex.Unlock()
+	return outputImg, nil
 }
 
 func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fiber.Ctx) (string, error) {
@@ -477,7 +301,12 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 		}
 		defer outFile.Close()
 
-		resizedImg := resize.Resize(64, 0, img, resize.MitchellNetravali)
+		// crop slightly larger than 64px to vastly increase the quality of the image, but not increase the file size
+		// *too* much and so that we dont have a ton of extra file data that will never be seen by the user
+		resizedImg, err := CropToCenter(img, 96)
+		if err != nil {
+			return "", err
+		}
 
 		var buf bytes.Buffer
 		options := &nativewebp.Options{}
@@ -859,8 +688,8 @@ func main() {
 			"Categories":        app.CategoryManager.GetCategories(),
 		}
 
-		if app.Config.WeatherEnabled {
-			weather := app.WeatherCache.GetWeather()
+		if app.Config.WeatherAPIKey != "" {
+			weather := app.WeatherManager.GetWeather()
 
 			renderData["WeatherData"] = fiber.Map{
 				"Temp": weather.Temperature,
@@ -869,8 +698,8 @@ func main() {
 			}
 		}
 
-		if app.Config.UptimeEnabled {
-			renderData["UptimeData"] = app.UptimeManager.getUptime()
+		if app.Config.UptimeAPIKey != "" {
+			renderData["UptimeData"] = app.UptimeManager.GetUptime()
 		}
 
 		return c.Render("views/index", renderData, "layouts/main")
