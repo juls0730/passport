@@ -1,4 +1,4 @@
-//go:generate tailwindcss -i styles/main.css -o assets/tailwind.css --minify
+//go:generate tailwindcss -i styles/main.scss -o assets/tailwind.css --minify
 
 package main
 
@@ -27,6 +27,7 @@ import (
 
 	"github.com/HugoSmits86/nativewebp"
 	"github.com/caarlos0/env/v11"
+	"github.com/disintegration/imaging"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/helmet"
 	"github.com/gofiber/fiber/v3/middleware/static"
@@ -35,6 +36,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/juls0730/passport/src/middleware"
 	"github.com/juls0730/passport/src/services"
+	"github.com/rwcarlsen/goexif/exif"
+	"github.com/rwcarlsen/goexif/tiff"
 	"golang.org/x/image/draw"
 	_ "modernc.org/sqlite"
 )
@@ -44,23 +47,36 @@ var embeddedAssets embed.FS
 
 var devContent = `<script>
 let host = window.location.hostname;
-const socket = new WebSocket('ws://' + host + ':2067/ws'); 
+let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const socket = new WebSocket(protocol + '//' + host + ':2067/ws');
 
 socket.addEventListener('message', (event) => {
     if (event.data === 'refresh') {
+		console.log('Got refresh signal');
+
+		let attempts = 0;
+		let delay = 100;
+		
         async function testPage() {
             try {
-            let res = await fetch(window.location.href)
+            	let res = await fetch(window.location.href)
             } catch (error) {
-                console.error(error);
-                setTimeout(testPage, 300);
+				if (attempts > 5) {
+					return;
+				}
+                setTimeout(testPage, delay);
+
+				// exponential backoff
+				attempts++;
+				delay = 100 * Math.pow(2, attempts);
+
                 return;
             }
             window.location.reload();
         }
 
-        testPage();
-    }
+		setTimeout(testPage, 150);
+	}
 });
 </script>`
 
@@ -282,8 +298,47 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 		return "", errors.New("unsupported file type")
 	}
 
-	if err != nil {
-		return "", err
+	if contentType != "image/svg+xml" {
+		off, err := srcFile.Seek(0, io.SeekStart)
+		if err != nil {
+			return "", fmt.Errorf("failed to seek to start of file: %v", err)
+		}
+
+		if off != 0 {
+			return "", fmt.Errorf("failed to seek to start of file: %v", err)
+		}
+
+		x, err := exif.Decode(srcFile)
+		// if there *is* exif, parse it
+		if err == nil {
+			tag, err := x.Get(exif.Orientation)
+			if err != nil {
+				return "", fmt.Errorf("failed to get orientation: %v", err)
+			}
+
+			if tag.Count == 1 && tag.Format() == tiff.IntVal {
+				orientation, err := tag.Int(0)
+				if err != nil {
+					return "", fmt.Errorf("failed to get orientation: %v", err)
+				}
+
+				slog.Debug("Orientation tag found", "orientation", orientation)
+
+				switch orientation {
+				case 3:
+					img = imaging.Rotate180(img)
+				case 6:
+					img = imaging.Rotate270(img)
+				case 8:
+					img = imaging.Rotate90(img)
+				}
+			}
+		}
+
+		img, err = CropToCenter(img, 96)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	assetsDir := "public/uploads"
@@ -291,7 +346,21 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 	iconPath := filepath.Join(assetsDir, fileName)
 
 	if contentType == "image/svg+xml" {
-		if err = c.SaveFile(file, iconPath); err != nil {
+		// replace currentColor with a text color
+		outFile, err := os.Create(iconPath)
+		if err != nil {
+			return "", err
+		}
+		defer outFile.Close()
+
+		svgText, err := io.ReadAll(srcFile)
+		if err != nil {
+			return "", err
+		}
+
+		svgText = bytes.ReplaceAll(svgText, []byte("currentColor"), []byte(`oklch(87% 0.015 286)`))
+		_, err = outFile.Write(svgText)
+		if err != nil {
 			return "", err
 		}
 	} else {
@@ -301,16 +370,9 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 		}
 		defer outFile.Close()
 
-		// crop slightly larger than 64px to vastly increase the quality of the image, but not increase the file size
-		// *too* much and so that we dont have a ton of extra file data that will never be seen by the user
-		resizedImg, err := CropToCenter(img, 96)
-		if err != nil {
-			return "", err
-		}
-
 		var buf bytes.Buffer
 		options := &nativewebp.Options{}
-		if err := nativewebp.Encode(&buf, resizedImg, options); err != nil {
+		if err := nativewebp.Encode(&buf, img, options); err != nil {
 			return "", err
 		}
 
@@ -790,6 +852,14 @@ func main() {
 				})
 			}
 
+			req.Name = strings.TrimSpace(req.Name)
+
+			if len(req.Name) > 50 {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Name is too long. Maximum length is 50 characters",
+				})
+			}
+
 			file, err := c.FormFile("icon")
 			if err != nil || file == nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -810,7 +880,7 @@ func main() {
 				})
 			}
 
-			filename := fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
+			filename := fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name[:min(10, len(req.Name))], " ", "_"))
 
 			iconPath, err := UploadFile(file, filename, contentType, c)
 			if err != nil {
@@ -818,8 +888,6 @@ func main() {
 					"message": "Failed to upload file, please try again!",
 				})
 			}
-
-			UploadFile(file, iconPath, contentType, c)
 
 			category, err := app.CategoryManager.CreateCategory(Category{
 				Name:  req.Name,
@@ -857,6 +925,23 @@ func main() {
 				})
 			}
 
+			req.Name = strings.TrimSpace(req.Name)
+			if req.Description != "" {
+				req.Description = strings.TrimSpace(req.Description)
+			}
+
+			if len(req.Name) > 50 {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Name is too long. Maximum length is 50 characters",
+				})
+			}
+
+			if len(req.Description) > 150 {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Description is too long. Maximum length is 150 characters",
+				})
+			}
+
 			categoryID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 			if err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -890,7 +975,7 @@ func main() {
 				})
 			}
 
-			filename := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), strings.ReplaceAll(req.Name, " ", "_"))
+			filename := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), strings.ReplaceAll(req.Name[:min(10, len(req.Name))], " ", "_"))
 
 			iconPath, err := UploadFile(file, filename, contentType, c)
 			if err != nil {
@@ -899,8 +984,6 @@ func main() {
 					"message": "Failed to upload file, please try again!",
 				})
 			}
-
-			UploadFile(file, iconPath, contentType, c)
 
 			link, err := app.CategoryManager.CreateLink(app.CategoryManager.db, Link{
 				CategoryID:  categoryID,
@@ -919,6 +1002,245 @@ func main() {
 			return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 				"message": "Link created successfully",
 				"link":    link,
+			})
+		})
+
+		api.Patch("/category/:id", func(c fiber.Ctx) error {
+			var req struct {
+				Name string `form:"name"`
+			}
+
+			if c.Params("id") == "" {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "ID is required",
+				})
+			}
+
+			id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to parse category ID: %v", err),
+				})
+			}
+
+			if err := c.Bind().Form(&req); err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Failed to parse request",
+				})
+			}
+
+			if req.Name != "" {
+				if len(req.Name) > 50 {
+					return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+						"message": "Name is too long. Maximum length is 50 characters",
+					})
+				}
+			}
+
+			category := app.CategoryManager.GetCategory(id)
+			if category == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Category not found",
+				})
+			}
+
+			tx, err := app.db.Begin()
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "Failed to start transaction",
+				})
+			}
+			defer tx.Rollback()
+
+			file, err := c.FormFile("icon")
+			if err == nil {
+				if file.Size > 5*1024*1024 {
+					return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+						"message": "File size too large. Maximum size is 5MB",
+					})
+				}
+
+				contentType := file.Header.Get("Content-Type")
+				if contentType != "image/svg+xml" {
+					return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+						"message": "Only svg files are allowed",
+					})
+				}
+
+				oldIconPath := category.Icon
+
+				filename := fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name[:min(10, len(req.Name))], " ", "_"))
+
+				iconPath, err := UploadFile(file, filename, contentType, c)
+				if err != nil {
+					slog.Error("Failed to upload file", "error", err)
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"message": "Failed to upload file, please try again!",
+					})
+				}
+
+				_, err = tx.Exec("UPDATE categories SET icon = ? WHERE id = ?", iconPath, id)
+				if err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"message": "Failed to update category",
+					})
+				}
+
+				err = os.Remove(filepath.Join("public/", oldIconPath))
+				if err != nil {
+					slog.Error("Failed to delete icon", "error", err)
+				}
+			}
+
+			if req.Name != "" {
+				_, err = tx.Exec("UPDATE categories SET name = ? WHERE id = ?", req.Name, category.ID)
+				if err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"message": "Failed to update category",
+					})
+				}
+			}
+
+			err = tx.Commit()
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "Failed to commit transaction",
+				})
+			}
+
+			return c.Status(fiber.StatusOK).JSON(fiber.Map{
+				"message": "Category updated successfully",
+			})
+		})
+
+		api.Patch("/category/:categoryID/link/:linkID", func(c fiber.Ctx) error {
+			var req struct {
+				Name        string `form:"name"`
+				Description string `form:"description"`
+				Icon        string `form:"icon"`
+			}
+			if err := c.Bind().Form(&req); err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Failed to parse request",
+				})
+			}
+
+			if len(req.Name) > 50 {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Name is too long. Maximum length is 50 characters",
+				})
+			}
+
+			if len(req.Description) > 150 {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Description is too long. Maximum length is 150 characters",
+				})
+			}
+
+			linkID, err := strconv.ParseInt(c.Params("linkID"), 10, 64)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to parse link ID: %v", err),
+				})
+			}
+
+			categoryID, err := strconv.ParseInt(c.Params("categoryID"), 10, 64)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": fmt.Sprintf("Failed to parse category ID: %v", err),
+				})
+			}
+
+			if app.CategoryManager.GetCategory(categoryID) == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Category not found",
+				})
+			}
+
+			link := app.CategoryManager.GetLink(linkID)
+			if link == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Link not found",
+				})
+			}
+
+			tx, err := app.db.Begin()
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "Failed to start transaction",
+				})
+			}
+			defer tx.Rollback()
+
+			file, err := c.FormFile("icon")
+			if err == nil {
+				if file.Size > 5*1024*1024 {
+					return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+						"message": "File size too large. Maximum size is 5MB",
+					})
+				}
+
+				contentType := file.Header.Get("Content-Type")
+				if !strings.HasPrefix(contentType, "image/") {
+					return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+						"message": "Only image files are allowed",
+					})
+				}
+
+				oldIconPath := link.Icon
+
+				filename := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), strings.ReplaceAll(req.Name[:min(10, len(req.Name))], " ", "_"))
+
+				iconPath, err := UploadFile(file, filename, contentType, c)
+				if err != nil {
+					slog.Error("Failed to upload file", "error", err)
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"message": "Failed to upload file, please try again!",
+					})
+				}
+
+				_, err = tx.Exec("UPDATE links SET icon = ? WHERE id = ?", iconPath, linkID)
+				if err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"message": "Failed to update link",
+					})
+				}
+
+				err = os.Remove(filepath.Join("public/", oldIconPath))
+				if err != nil {
+					slog.Error("Failed to delete icon", "error", err)
+				}
+			}
+
+			if req.Name != "" {
+				_, err = tx.Exec("UPDATE links SET name = ? WHERE id = ?", req.Name, linkID)
+				if err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"message": "Failed to update link",
+					})
+				}
+			}
+
+			if req.Description != "" {
+				_, err = tx.Exec("UPDATE links SET description = ? WHERE id = ?", req.Description, linkID)
+				if err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"message": "Failed to update link",
+					})
+				}
+			}
+
+			err = tx.Commit()
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "Failed to commit transaction",
+				})
+			}
+
+			slog.Info("Link updated successfully", "id", linkID, "name", req.Name)
+
+			return c.Status(fiber.StatusOK).JSON(fiber.Map{
+				"message": "Link updated successfully",
 			})
 		})
 

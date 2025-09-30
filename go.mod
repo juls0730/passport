@@ -5,6 +5,8 @@ go 1.25.0
 require (
 	github.com/HugoSmits86/nativewebp v1.2.0
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/disintegration/imaging v1.6.2
+	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	golang.org/x/image v0.24.0
 	modernc.org/sqlite v1.39.0
 )

@@ -63,6 +63,9 @@ You can then run the binary.
 | `PASSPORT_SEARCH_PROVIDER`             | The search provider to use for the search bar, without any query parameters     | true     |
 | `PASSPORT_SEARCH_PROVIDER_QUERY_PARAM` | The query parameter to use for the search provider, e.g. `q` for most providers | false    | q       |
 
+> [!NOTE]
+> Currently passport only supports search using a GET request.
+
 #### Weather configuration
 
 The weather integration is optional, and will be enabled automatically if you provide an API key. The following only applies if you are using the OpenWeatherMap integration.

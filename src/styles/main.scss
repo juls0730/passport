@@ -4,11 +4,11 @@
 @theme {
     --color-accent: oklch(57.93% 0.258 294.12);
     --color-success: oklch(70.19% 0.158 160.44);
-    --color-error: oklch(63.43% 0.251 28.48);
+    --color-error: oklch(53% 0.251 28.48);
 
     --color-base: oklch(11% .007 285);
-    --color-surface: oklch(19% 0.007 314.66);
-    --color-overlay: oklch(26% 0.008 314.66);
+    --color-surface: oklch(19% 0.007 285.66);
+    --color-overlay: oklch(26% 0.008 285.66);
 
     --color-muted: oklch(63% 0.015 286);
     --color-subtle: oklch(72% 0.015 286);
@@ -61,7 +61,7 @@ button {
 }
 
 input:not(.search) {
-    @apply px-4 py-2 rounded-md w-full bg-surface border border-highlight-sm/70 placeholder:text-highlight text-text focus-visible:outline-none transition-colors duration-300 ease-out overflow-hidden;
+    @apply px-4 py-2 rounded-md w-full bg-surface border border-highlight/70 placeholder:text-highlight text-text focus-visible:outline-none transition-colors duration-300 ease-out overflow-hidden;
     
     &[type="file"] {
         @apply p-0 cursor-pointer;
@@ -85,14 +85,16 @@ input:not(.search) {
     transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 
-    &:hover {
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        transform: translateY(-4px);
-    }
+    &:not(.admin) {
+        &:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            transform: translateY(-4px);
+        }
 
-    &:active {
-        box-shadow: 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        transform: translateY(2px);
+        &:active {
+            box-shadow: 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transform: translateY(2px);
+        }
     }
 }
 
@@ -110,18 +112,24 @@ input:not(.search) {
     }
 }
 
-.link-card img {
+/* Div that holds the image */
+.link-card div:has(img):first-child {
+    flex-shrink: 0;
     margin-right: 0.5rem;
+}
+
+.link-card div:first-child img {
     user-select: none;
     border-radius: 0.375rem;
     aspect-ratio: 1/1;
     object-fit: cover;
 }
 
-.link-card div {
+/* Div that holds the text */
+.link-card div:nth-child(2) {
     word-break: break-all;
 }
 
-.link-card div p {
+.link-card div:nth-child(2) p {
     color: var(--color-subtle);
 }

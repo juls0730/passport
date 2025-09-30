@@ -18,32 +18,129 @@
         <div class="w-full sm:w-4/5 p-2.5">
             {{#each Categories}}
             <div class="flex items-center" key="category-{{this.ID}}">
-                <img class="object-contain mr-2 select-none" width="32" height="32" draggable="false"
-                    alt="{{this.Name}}" src="{{this.Icon}}" />
-                <h2 class="capitalize break-all">{{this.Name}}</h2>
-                <button onclick="deleteCategory({{this.ID}})"
-                    class="w-fit h-fit flex p-0.5 bg-base border border-highlight rounded-md hover:filter hover:brightness-125 cursor-pointer"><svg
-                        xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-                        <path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
-                    </svg></button>
+                <div class="shrink-0 relative mr-2 h-full flex items-center justify-center">
+                    <img class="object-contain select-none" width="32" height="32" draggable="false" alt="{{this.Name}}"
+                        src="{{this.Icon}}" />
+                    <button onclick="selectIcon()"
+                        class="absolute inset-0 bg-highlight/80 hidden rounded-md text-base items-center justify-center"
+                        draggable="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"
+                            viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2" d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5l5 5m-5-5v12" />
+                        </svg>
+                    </button>
+                </div>
+                <h2 class="capitalize break-all border border-transparent">{{this.Name}}</h2>
+                <div class="ml-2" data-edit-actions>
+                    <div class="flex flex-row gap-2">
+                        <button aria-label="Edit category" onclick="editCategory({{this.ID}})"
+                            class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                                <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2">
+                                    <path d="M7 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1" />
+                                    <path d="M20.385 6.585a2.1 2.1 0 0 0-2.97-2.97L9 12v3h3zM16 5l3 3" />
+                                </g>
+                            </svg>
+                        </button>
+                        <button aria-label="Delete category" onclick="deleteCategory({{this.ID}})"
+                            class="text-error w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="hidden flex-row gap-2">
+                        <button aria-label="Confirm category edit" onclick="confirmCategoryEdit({{this.ID}})"
+                            class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2" d="m5 12l5 5L20 7" />
+                            </svg>
+                        </button>
+                        <button aria-label="Cancel category edit" onclick="cancelCategoryEdit({{this.ID}})"
+                            class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-error">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0m15.364-6.364L5.636 18.364" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
                 {{#each this.Links}}
-                <div key="link-{{this.ID}}" class="link-card relative">
-                    <img width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
-                    <div>
-                        <h3>{{this.Name}}</h3>
-                        <p>{{this.Description}}</p>
+                <div key="link-{{this.ID}}" class="link-card relative admin">
+                    <div class="relative">
+                        <img width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
+                        <button onclick="selectIcon()"
+                            class="absolute inset-0 bg-highlight/80 hidden rounded-md text-base items-center justify-center"
+                            draggable="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"
+                                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5l5 5m-5-5v12" />
+                            </svg>
+                        </button>
                     </div>
-                    <button onclick="deleteLink({{this.ID}}, {{this.CategoryID}})"
-                        class="w-fit h-fit flex p-0.5 bg-base border border-highlight/70 rounded-md hover:filter hover:brightness-125 cursor-pointer absolute right-1 top-1"><svg
-                            xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-                            <path fill="none" stroke="#ff1919" stroke-linecap="round" stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
-                        </svg></button>
+                    <div class="flex-grow">
+                        <h3 class="border border-transparent">{{this.Name}}</h3>
+                        <p class="min-h-5">{{this.Description}}</p>
+                    </div>
+                    <div class="absolute right-1 top-1" data-edit-actions>
+                        <div class="flex flex-row gap-2">
+                            <button aria-label="Edit link" onclick="editLink({{this.ID}}, {{this.CategoryID}})"
+                                class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                                    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2">
+                                        <path d="M7 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1" />
+                                        <path d="M20.385 6.585a2.1 2.1 0 0 0-2.97-2.97L9 12v3h3zM16 5l3 3" />
+                                    </g>
+                                </svg>
+                            </button>
+                            <button aria-label="Delete link" onclick="deleteLink({{this.ID}}, {{this.CategoryID}})"
+                                class="text-error w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                                    <path fill="none" stroke="currentColor" stroke-linecap="round"
+                                        stroke-linejoin="round" stroke-width="2"
+                                        d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="hidden flex-row gap-2">
+                            <button aria-label="Confirm link edit"
+                                onclick="confirmLinkEdit({{this.ID}}, {{this.CategoryID}})"
+                                class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                                    <path fill="none" stroke="currentColor" stroke-linecap="round"
+                                        stroke-linejoin="round" stroke-width="2" d="m5 12l5 5L20 7" />
+                                </svg>
+                            </button>
+                            <button aria-label="Cancel link edit"
+                                onclick="cancelLinkEdit({{this.ID}}, {{this.CategoryID}})"
+                                class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-error">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                                    <path fill="none" stroke="currentColor" stroke-linecap="round"
+                                        stroke-linejoin="round" stroke-width="2"
+                                        d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0m15.364-6.364L5.636 18.364" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 {{/each}}
                 <div onclick="openModal('link', {{this.ID}})"
@@ -71,52 +168,14 @@
     </section>
 </div>
 
-<div id="modal-container"
+<input type="file" id="icon-upload" accept="image/*" style="display: none;" />
+<div id="modal-container" role="dialog" aria-modal="true"
     class="flex modal-bg fixed top-0 left-0 bottom-0 right-0 bg-black/45 justify-center items-center">
     <div class="bg-overlay rounded-xl overflow-hidden w-full p-4 modal max-w-sm">
-        <div id="category-contents" class="hidden">
-            <h3>Create A category</h3>
-            <form id="category-form" action="/api/categories" method="post"
-                class="flex flex-col gap-y-3 my-2 [&>div]:flex [&>div]:flex-col [&>div]:gap-1">
-                <div>
-                    <label for="categoryName">Name</label>
-                    <input required type="text" name="name" id="categoryName" />
-                </div>
-                <div>
-                    <label for="linkIcon">Icon</label>
-                    <input type="file" name="icon" id="linkIcon" accept=".svg" required />
-                </div>
-                <button class="px-4 py-2 rounded-md w-full bg-accent text-white border-0" type="submit">Create
-                    category</button>
-            </form>
-            <span id="category-message"></span>
-        </div>
-
-        <div id="link-contents" class="hidden">
-            <h3>Add A link</h3>
-            <form id="link-form" action="/api/links" method="post"
-                class="flex flex-col gap-y-3 my-2 [&>div]:flex [&>div]:flex-col [&>div]:gap-1">
-                <div>
-                    <label for="linkName">Name</label>
-                    <input required type="text" name="name" id="linkName" />
-                </div>
-                <div>
-                    <label for="linkDesc">Description (optional)</label>
-                    <input type="text" name="description" id="linkDesc" />
-                </div>
-                <div>
-                    <label for="linkURL">URL</label>
-                    <input required type="url" name="url" id="linkURL" />
-                </div>
-                <div>
-                    <label for="linkIcon">Icon</label>
-                    <input required type="file" name="icon" id="linkIcon" accept="image/*" />
-                </div>
-                <button class="px-4 py-2 rounded-md w-full bg-accent text-white border-0" type="submit">Add
-                    link</button>
-            </form>
-            <span id="link-message"></span>
-        </div>
+        {{> 'partials/modals/category-form' }}
+        {{> 'partials/modals/link-form' }}
+        {{> 'partials/modals/delete-link' }}
+        {{> 'partials/modals/delete-category' }}
     </div>
 </div>
 
@@ -125,8 +184,124 @@
     let modalContainer = document.getElementById("modal-container");
     let modal = modalContainer.querySelector("div");
     let pageElement = document.getElementById("blur-target");
+    let iconUploader = document.getElementById("icon-upload");
     let targetCategoryID = null;
     let activeModal = null;
+
+    // errpr check the form and add the invalid class if it's invalid
+
+    /**
+    * Submits a form to the given URL
+    * @param {Event} event - The event that triggered the function
+    * @param {string} url - The URL to submit the form to
+    * @param {"category" | "link"} target - The target to close the modal for
+    * @returns {Promise<void>}
+    */
+    async function submitRequest(event, url, target) {
+        event.preventDefault();
+        let data = new FormData(event.target);
+
+        let res = await fetch(url, {
+            method: "POST",
+            body: data
+        });
+
+        if (res.status === 201) {
+            closeModal(target);
+            document.getElementById(`${target}-form`).reset();
+            location.reload();
+        } else {
+            let json = await res.json();
+            document.getElementById(`${target}-message`).innerText = json.message;
+        }
+    }
+
+    /**
+    * Initializes the form for the given form
+    * @param {"category" | "link"} form - The form to initialize
+    * @returns {void}
+    */
+    function addErrorListener(form) {
+        document.getElementById(`${form}-form`).querySelector("button").addEventListener("click", (event) => {
+            document.getElementById(`${form}-form`).querySelectorAll("[required]").forEach((el) => {
+                el.classList.add("invalid:border-[#861024]!");
+            });
+        });
+    }
+
+    addErrorListener("link");
+    document.getElementById("link-form").addEventListener("submit", async (event) => {
+        await submitRequest(event, `/api/category/${targetCategoryID}/link`, "link");
+    });
+
+    addErrorListener("category");
+    document.getElementById("category-form").addEventListener("submit", async (event) => {
+        await submitRequest(event, `/api/category`, "category");
+    });
+
+    // when the background is clicked, close the modal
+    modalContainer.addEventListener("click", (event) => {
+        if (event.target === modalContainer) {
+            closeModal();
+        }
+    });
+
+    function selectIcon() {
+        iconUploader.click();
+    }
+
+    /**
+    * Processes a file and returns a data URL.
+    * @param {File} file The file to process.
+    */
+    async function processFile(file) {
+        let reader = new FileReader();
+        return new Promise((resolve, reject) => {
+
+            if (file.type === "image/svg+xml") {
+                reader.addEventListener("load", async (event) => {
+                    let svgString = event.target.result;
+
+                    console.log(svgString);
+
+                    svgString = svgString.replaceAll("currentColor", "oklch(87% 0.015 286)");
+
+                    console.log(svgString);
+
+                    // turn svgString into a data URL
+                    resolve("data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgString))));
+                })
+
+                reader.readAsText(file);
+            } else {
+
+                // these should be jpg, png, or webp
+                // make a DataURL out of it
+                reader.addEventListener("load", async (event) => {
+                    resolve(event.target.result);
+                });
+
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    let targetedImageElement = null;
+    iconUploader.addEventListener("change", async (event) => {
+        let file = event.target.files[0];
+        if (file === null) {
+            return;
+        }
+
+        if (targetedImageElement === null) {
+            throw new Error("icon upload element was clicked, but no target image element was set");
+        }
+
+        console.log(file);
+
+        let dataURL = await processFile(file);
+        targetedImageElement.src = dataURL;
+    });
 
     function openModal(modalKind, categoryID) {
         activeModal = modalKind;
@@ -137,7 +312,10 @@
 
         modalContainer.classList.add("is-visible");
         modal.classList.add("is-visible");
-        document.getElementById(modalKind + "-form").reset();
+
+        if (document.getElementById(modalKind + "-form") !== null) {
+            document.getElementById(modalKind + "-form").reset();
+        }
     }
 
     function closeModal() {
@@ -151,93 +329,482 @@
             activeModal = null;
         }, 300)
 
-        document.getElementById(activeModal + "-form").querySelectorAll("[required]").forEach((el) => {
-            el.classList.remove("invalid:border-[#861024]!");
-        });
+        if (document.getElementById(activeModal + "-form") !== null) {
+            document.getElementById(activeModal + "-form").querySelectorAll("[required]").forEach((el) => {
+                el.classList.remove("invalid:border-[#861024]!");
+            });
+        }
 
         targetCategoryID = null;
     }
 
-    modalContainer.addEventListener("click", (event) => {
-        if (event.target === modalContainer) {
-            closeModal();
-        }
-    });
+    let currentlyEditingLink = {
+        ID: null,
+        categoryID: null,
+        originalText: null,
+        originalDescription: null,
+        icon: null,
+    };
 
-    async function deleteLink(linkID, categoryID) {
+    async function editLink(linkID, categoryID) {
+        if (currentlyEditingLink.ID !== null) {
+            // cancel the edit if it's already in progress
+            cancelLinkEdit(currentlyEditingLink.ID, currentlyEditingCategory.categoryID);
+        }
+
+        let linkEl = document.querySelector(`[key=link-${linkID}]`);
+        let linkImg = linkEl.querySelector("div:first-child img");
+        let fileUploaderOverlay = linkImg.nextElementSibling;
+        let linkName = linkEl.querySelector("div:nth-child(2) h3");
+        let linkDesc = linkEl.querySelector("div:nth-child(2) p");
+        let editActions = linkEl.querySelector("[data-edit-actions]");
+
+        currentlyEditingLink.ID = linkID;
+        currentlyEditingCategory.categoryID = categoryID;
+        currentlyEditingLink.originalText = linkName.textContent;
+        currentlyEditingLink.originalDescription = linkDesc.textContent;
+        currentlyEditingLink.icon = linkImg.src;
+
+        console.log(currentlyEditingLink)
+
+        iconUploader.accept = "image/*";
+        targetedImageElement = linkImg;
+
+        editActions.querySelector("div").classList.add("hidden");
+        editActions.querySelector("div").classList.remove("flex");
+
+        editActions.querySelector("div:nth-child(2)").classList.remove("hidden");
+        editActions.querySelector("div:nth-child(2)").classList.add("flex");
+
+        fileUploaderOverlay.classList.remove("hidden");
+        fileUploaderOverlay.classList.add("flex");
+
+        replaceWithResizableInput(linkName);
+        replaceWithResizableTextarea(linkDesc);
+    }
+
+    async function confirmLinkEdit(linkID, categoryID) {
+        let linkEl = document.querySelector(`[key=link-${linkID}]`);
+        let linkImg = linkEl.querySelector("div:first-child img");
+        let fileUploaderOverlay = linkImg.nextElementSibling;
+        let linkNameInput = linkEl.querySelector("input");
+        let linkDescInput = linkEl.querySelector("textarea");
+        let editActions = linkEl.querySelector("[data-edit-actions]");
+
+        linkNameInput.value = linkNameInput.value.trim();
+        linkDescInput.value = linkDescInput.value.trim();
+        console.log(linkNameInput.value);
+        if (linkNameInput.value === "") {
+            return;
+        }
+
+        let formData = new FormData();
+        if (linkNameInput.value !== currentlyEditingLink.originalText) {
+            formData.append("name", linkNameInput.value)
+        }
+
+        if (linkDescInput.value !== currentlyEditingLink.originalDescription) {
+            formData.append("description", linkDescInput.value)
+        }
+
+        if (iconUploader.files.length > 0) {
+            formData.append("icon", iconUploader.files[0]);
+        }
+
+        // nothing to update
+        if (formData.get("name") === null && formData.get("description") === null && formData.get("icon") === null) {
+            return;
+        }
+
         let res = await fetch(`/api/category/${categoryID}/link/${linkID}`, {
-            method: "DELETE"
+            method: "PATCH",
+            body: formData
         });
 
         if (res.status === 200) {
-            let linkEl = document.querySelector(`[key="link-${linkID}"]`);
-            linkEl.remove();
+
+            iconUploader.value = "";
+
+            currentlyEditingLink.icon = null;
+
+            cancelLinkEdit(currentlyEditingLink.ID, currentlyEditingCategory.categoryID, linkNameInput.value || currentlyEditingLink.originalText, linkDescInput.value || currentlyEditingLink.originalDescription);
+            currentlyEditingLink.originalText = null;
+            currentlyEditingLink.originalDescription = null;
+
+            currentlyEditingLink.ID = null;
+        } else {
+            console.error("Failed to edit category");
         }
     }
 
-    async function deleteCategory(categoryID) {
-        let res = await fetch(`/api/category/${categoryID}`, {
+    async function cancelLinkEdit(linkID, categoryID, text = undefined, description = undefined) {
+        let linkEl = document.querySelector(`[key=link-${linkID}]`);
+        let linkInput = linkEl.querySelector("input");
+        let linkTextarea = linkEl.querySelector("textarea");
+        let linkImg = linkEl.querySelector("div:first-child img");
+        let fileUploaderOverlay = linkImg.nextElementSibling;
+        let editActions = linkEl.querySelector("[data-edit-actions]");
+
+        console.log(linkInput);
+        console.log(editActions);
+
+        if (currentlyEditingLink.icon !== null) {
+            linkImg.src = currentlyEditingLink.icon;
+        }
+
+        editActions.querySelector("div").classList.remove("hidden");
+        editActions.querySelector("div").classList.add("flex");
+
+        editActions.querySelector("div:nth-child(2)").classList.add("hidden");
+        editActions.querySelector("div:nth-child(2)").classList.remove("flex");
+
+        fileUploaderOverlay.classList.add("hidden");
+        fileUploaderOverlay.classList.remove("flex");
+
+        if (text === undefined) {
+            text = currentlyEditingLink.originalText;
+        }
+
+        if (description === undefined) {
+            description = currentlyEditingLink.originalDescription;
+        }
+
+        restoreElementFromInput(linkInput, text);
+        restoreElementFromInput(linkTextarea, description);
+
+        currentlyEditingLink.ID = null;
+        targetedImageElement = null;
+    }
+
+    let currentlyDeletingLink = {
+        ID: null,
+        categoryID: null,
+    };
+
+    async function deleteLink(linkID, categoryID) {
+        currentlyDeletingLink.ID = linkID;
+        currentlyDeletingLink.categoryID = categoryID;
+
+        let linkNameSpan = document.getElementById("link-name");
+        linkNameSpan.textContent = document.querySelector(`[key=link-${linkID}] h3`).textContent;
+
+        openModal("link-delete");
+    }
+
+    async function confirmDeleteLink() {
+        let res = await fetch(`/api/category/${currentlyDeletingLink.categoryID}/link/${currentlyDeletingLink.ID}`, {
             method: "DELETE"
         });
 
         if (res.status === 200) {
-            let categoryEl = document.querySelector(`[key="category-${categoryID}"]`);
+            let linkEl = document.querySelector(`[key="link-${currentlyDeletingLink.ID}"]`);
+            linkEl.remove();
+
+            closeModal();
+        }
+    }
+
+    let currentlyEditingCategory = {
+        ID: null,
+        originalText: null,
+        icon: null,
+    };
+
+    async function editCategory(categoryID) {
+        if (currentlyEditingCategory.ID !== null) {
+            // cancel the edit if it's already in progress
+            cancelCategoryEdit(currentlyEditingCategory.ID);
+        }
+
+        currentlyEditingCategory.ID = categoryID;
+
+        let categoryEl = document.querySelector(`[key=category-${categoryID}]`);
+        let categoryName = categoryEl.querySelector("h2");
+        let categoryIcon = categoryEl.querySelector("div img");
+        let fileUploaderOverlay = categoryIcon.nextElementSibling;
+        let editActions = categoryEl.querySelector("[data-edit-actions]");
+
+        currentlyEditingCategory.originalText = categoryName.textContent;
+        currentlyEditingCategory.icon = categoryIcon.src;
+
+        iconUploader.accept = "image/svg+xml";
+        targetedImageElement = categoryIcon;
+
+        editActions.querySelector("div").classList.add("hidden");
+        editActions.querySelector("div").classList.remove("flex");
+
+        editActions.querySelector("div:nth-child(2)").classList.remove("hidden");
+        editActions.querySelector("div:nth-child(2)").classList.add("flex");
+
+        fileUploaderOverlay.classList.remove("hidden");
+        fileUploaderOverlay.classList.add("flex");
+
+        replaceWithResizableInput(categoryName);
+    }
+
+    async function confirmCategoryEdit(categoryID) {
+        let categoryEl = document.querySelector(`[key=category-${categoryID}]`);
+        let categoryInput = categoryEl.querySelector("input");
+        let categoryIcon = categoryEl.querySelector("div img");
+        let fileUploaderOverlay = categoryIcon.nextElementSibling;
+        let editActions = categoryEl.querySelector("[data-edit-actions]");
+
+        if (categoryInput.value === "") {
+            return;
+        }
+
+        categoryInput.value = categoryInput.value.trim();
+
+        let formData = new FormData();
+        if (categoryInput.value !== currentlyEditingCategory.originalText) {
+            formData.append("name", categoryInput.value)
+        }
+
+        if (iconUploader.files.length > 0) {
+            formData.append("icon", iconUploader.files[0]);
+        }
+
+        // nothing to update
+        if (formData.get("name") === null && formData.get("icon") === null) {
+            return;
+        }
+
+        let res = await fetch(`/api/category/${categoryID}`, {
+            method: "PATCH",
+            body: formData
+        });
+
+        if (res.status === 200) {
+
+            iconUploader.value = "";
+
+            cancelCategoryEdit(categoryID, categoryInput.value || currentlyEditingCategory.originalText);
+
+            currentlyEditingCategory.icon = null;
+            currentlyEditingCategory.originalText = null;
+
+            currentlyEditingCategory.ID = null;
+        } else {
+            console.error("Failed to edit category");
+        }
+    }
+
+    async function cancelCategoryEdit(categoryID, text = undefined) {
+        let categoryEl = document.querySelector(`[key=category-${categoryID}]`);
+        let categoryInput = categoryEl.querySelector("input");
+        let categoryIcon = categoryEl.querySelector("div img");
+        let fileUploaderOverlay = categoryIcon.nextElementSibling;
+        let editActions = categoryEl.querySelector("[data-edit-actions]");
+
+        console.log(categoryInput);
+        console.log(editActions);
+
+        if (currentlyEditingCategory.icon !== null) {
+            categoryIcon.src = currentlyEditingCategory.icon;
+        }
+
+        editActions.querySelector("div").classList.remove("hidden");
+        editActions.querySelector("div").classList.add("flex");
+
+        editActions.querySelector("div:nth-child(2)").classList.add("hidden");
+        editActions.querySelector("div:nth-child(2)").classList.remove("flex");
+
+        fileUploaderOverlay.classList.remove("flex");
+        fileUploaderOverlay.classList.add("hidden");
+
+        restoreElementFromInput(categoryInput, text || currentlyEditingCategory.originalText);
+
+        currentlyEditingCategory.ID = null;
+        targetedImageElement = null;
+    }
+
+    let currentlyDeletingCategory = {
+        ID: null,
+    };
+
+    async function deleteCategory(categoryID) {
+        currentlyDeletingCategory.ID = categoryID;
+
+        let categoryNameSpan = document.getElementById("category-name");
+        categoryNameSpan.textContent = document.querySelector(`[key=category-${categoryID}] h2`).textContent;
+
+        openModal("category-delete");
+    }
+
+    async function confirmDeleteCategory() {
+        let res = await fetch(`/api/category/${currentlyDeletingCategory.ID}`, {
+            method: "DELETE"
+        });
+
+        if (res.status === 200) {
+            let categoryEl = document.querySelector(`[key="category-${currentlyDeletingCategory.ID}"]`);
             // get the next element and remove it (its the link grid)
             let nextEl = categoryEl.nextElementSibling;
             nextEl.remove();
             categoryEl.remove();
+
+            closeModal();
         }
     }
 
-    document.getElementById("link-form").querySelector("button").addEventListener("click", (event) => {
-        document.getElementById("link-form").querySelectorAll("[required]").forEach((el) => {
-            el.classList.add("invalid:border-[#861024]!");
+    /**
+    * Replaces an H2 element with a resizable input field that matches its initial text and styling.
+    * @param {HTMLElement} targetEl The element to replace.
+    */
+    function replaceWithResizableInput(targetEl) {
+        const originalText = targetEl.textContent;
+        const computedStyle = window.getComputedStyle(targetEl);
+
+        const inputElement = document.createElement('input');
+        inputElement.type = 'text';
+        inputElement.value = originalText;
+        inputElement.className = 'resizable-input';
+        inputElement.placeholder = 'Enter title...';
+        inputElement.dataset.originalElementType = targetEl.tagName;
+        inputElement.dataset.originalClassName = targetEl.className;
+
+        const stylesToCopy = [
+            'font-family', 'font-size', 'font-weight', 'font-style', 'color',
+            'line-height', 'letter-spacing', 'text-transform', 'text-align',
+            'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+            'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
+            'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
+            'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+            'border-radius', 'box-sizing',
+            'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+            'height'
+        ];
+
+        stylesToCopy.forEach(prop => {
+            inputElement.style[prop] = computedStyle[prop];
         });
-    });
 
-    document.getElementById("link-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        let data = new FormData(event.target);
+        inputElement.style.display = 'inline-block';
+        inputElement.style.backgroundColor = 'var(--color-base)';
+        inputElement.style.border = '1px solid var(--color-highlight-sm)';
+        inputElement.style.borderRadius = '0.375rem';
+        inputElement.maxLength = 50;
 
-        let res = await fetch(`/api/category/${targetCategoryID}/link`, {
-            method: "POST",
-            body: data
+        /**
+         * Function to measure the text width accurately and apply it to the input.
+         * @param {HTMLInputElement} inputEl The input element to resize.
+         */
+        const resizeInput = (inputEl) => {
+            const tempSpan = document.createElement('span');
+            const currentInputComputedStyle = window.getComputedStyle(inputEl);
+
+            const textStylesToCopy = [
+                'font-family', 'font-size', 'font-weight', 'font-style', 'letter-spacing',
+                'text-transform', 'line-height'
+            ];
+            textStylesToCopy.forEach(prop => {
+                tempSpan.style[prop] = currentInputComputedStyle[prop];
+            });
+
+            tempSpan.style.position = 'absolute';
+            tempSpan.style.visibility = 'hidden';
+            tempSpan.style.whiteSpace = 'nowrap';
+            tempSpan.textContent = inputEl.value === '' ? inputEl.placeholder || 'W' : inputEl.value;
+
+            document.body.appendChild(tempSpan);
+            let measuredTextWidth = tempSpan.offsetWidth;
+            document.body.removeChild(tempSpan);
+
+            // Add a small buffer for the caret and a bit of extra space
+            const caretBuffer = 10;
+            let finalWidth = measuredTextWidth + caretBuffer;
+
+            const minWidth = 100;
+            finalWidth = Math.max(finalWidth, minWidth);
+
+            if (currentInputComputedStyle.boxSizing === 'border-box') {
+                const hPadding = parseFloat(currentInputComputedStyle.paddingLeft) + parseFloat(currentInputComputedStyle.paddingRight);
+                const hBorder = parseFloat(currentInputComputedStyle.borderLeftWidth) + parseFloat(currentInputComputedStyle.borderRightWidth);
+                inputEl.style.width = (finalWidth + hPadding + hBorder) + 'px';
+            } else {
+                inputEl.style.width = finalWidth + 'px';
+            }
+        };
+
+        setTimeout(() => resizeInput(inputElement), 0);
+        inputElement.addEventListener('input', () => resizeInput(inputElement));
+        targetEl.parentNode.replaceChild(inputElement, targetEl);
+
+        inputElement.focus();
+    }
+
+    function replaceWithResizableTextarea(targetEl) {
+        const originalText = targetEl.textContent;
+        const computedStyle = window.getComputedStyle(targetEl);
+
+        const inputElement = document.createElement('textarea');
+        inputElement.value = originalText;
+        inputElement.className = 'resizable-input';
+        inputElement.placeholder = 'Enter title...';
+        inputElement.dataset.originalElementType = targetEl.tagName;
+        inputElement.dataset.originalClassName = targetEl.className;
+
+        const stylesToCopy = [
+            'font-family', 'font-size', 'font-weight', 'font-style', 'color',
+            'line-height', 'letter-spacing', 'text-transform', 'text-align',
+            'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+            'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
+            'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
+            'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+            'border-radius', 'box-sizing',
+            'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+            'height'
+        ];
+
+        stylesToCopy.forEach(prop => {
+            inputElement.style[prop] = computedStyle[prop];
         });
 
-        if (res.status === 201) {
-            closeModal('link');
-            document.getElementById("link-form").reset();
-            location.reload();
-        } else {
-            let json = await res.json();
-            document.getElementById("category-message").innerText = json.message;
+        inputElement.style.backgroundColor = 'var(--color-base)';
+        inputElement.style.border = '1px solid var(--color-highlight-sm)';
+        inputElement.style.borderRadius = '0.375rem';
+        inputElement.style.resize = 'none';
+        inputElement.style.overflow = 'hidden';
+        inputElement.style.width = '100%';
+        inputElement.style.outline = 'none';
+        inputElement.maxLength = 150;
+
+        function resize() {
+            inputElement.style.height = "0px";
+            inputElement.style.height = inputElement.scrollHeight + "px";
         }
-    });
 
-    document.getElementById("category-form").querySelector("button").addEventListener("click", (event) => {
-        document.getElementById("category-form").querySelectorAll("[required]").forEach((el) => {
-            el.classList.add("invalid:border-[#861024]!");
+        setTimeout(() => resize(), 0);
+        inputElement.addEventListener('input', () => resize());
+        targetEl.parentNode.replaceChild(inputElement, targetEl);
+
+        inputElement.focus();
+    }
+
+    function restoreElementFromInput(inputEl, originalText) {
+        const computedStyle = window.getComputedStyle(inputEl);
+
+        let elementType = inputEl.dataset.originalElementType;
+        const newElement = document.createElement(elementType);
+        newElement.textContent = originalText;
+        newElement.className = inputEl.dataset.originalClassName;
+
+        newElement.style.border = '1px solid #0000';
+
+        const stylesToCopy = [
+            'font-family', 'font-size', 'font-weight', 'font-style', 'color',
+            'line-height', 'letter-spacing', 'text-transform', 'text-align',
+            'padding-top', 'padding-right', 'padding-bottom', 'padding-left', 'box-sizing',
+            'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+            'height'
+        ];
+
+        stylesToCopy.forEach(prop => {
+            newElement.style[prop] = computedStyle[prop];
         });
-    });
 
-    document.getElementById("category-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        let data = new FormData(event.target);
-
-        let res = await fetch(`/api/category`, {
-            method: "POST",
-            body: data
-        });
-
-        if (res.status === 201) {
-            closeModal('category');
-            document.getElementById("category-form").reset();
-            location.reload();
-        } else {
-            let json = await res.json();
-            document.getElementById("link-message").innerText = json.message;
-        }
-    });
+        inputEl.parentNode.replaceChild(newElement, inputEl);
+    }
 </script>
 
 <style>

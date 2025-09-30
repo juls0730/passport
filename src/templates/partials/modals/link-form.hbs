@@ -1,0 +1,25 @@
+<div id="link-contents" class="hidden">
+    <h3>Add A link</h3>
+    <form id="link-form" action="/api/links" method="post"
+        class="flex flex-col gap-y-3 my-2 [&>div]:flex [&>div]:flex-col [&>div]:gap-1">
+        <div>
+            <label for="linkName">Name</label>
+            <input required type="text" name="name" id="linkName" maxlength="50" />
+        </div>
+        <div>
+            <label for="linkDesc">Description (optional)</label>
+            <input type="text" name="description" id="linkDesc" maxlength="150" />
+        </div>
+        <div>
+            <label for="linkURL">URL</label>
+            <input required type="url" name="url" id="linkURL" />
+        </div>
+        <div>
+            <label for="linkIcon">Icon</label>
+            <input required type="file" name="icon" id="linkIcon" accept="image/*" />
+        </div>
+        <button class="px-4 py-2 rounded-md w-full bg-accent text-white border-0" type="submit">Add
+            link</button>
+    </form>
+    <span id="link-message"></span>
+</div>
