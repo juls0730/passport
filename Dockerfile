@@ -3,20 +3,32 @@ FROM golang:1.25 AS builder
 # build dependencies
 RUN apt update && apt install -y upx
 
-RUN curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.13/tailwindcss-linux-x64
-RUN chmod +x tailwindcss-linux-x64
-RUN mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
+ARG TARGETARCH
+RUN set -eux; \
+    echo "Building for architecture: ${TARGETARCH}"; \
+    case "${TARGETARCH}" in \
+        "amd64") \
+            arch_suffix='x64' ;; \
+        "arm64") \
+            arch_suffix='arm64' ;; \
+        *) \
+            echo "Unsupported architecture: ${TARGETARCH}" && exit 1 ;; \
+    esac; \
+    curl -sLO "https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.13/tailwindcss-linux-${arch_suffix}"; \
+    mv "tailwindcss-linux-${arch_suffix}" /usr/local/bin/tailwindcss; \
+    chmod +x /usr/local/bin/tailwindcss;
+    
 
 RUN go install github.com/juls0730/zqdgr@latest
 
 WORKDIR /app
 
-ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+ARG TARGETARCH
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH}
 
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-
 
 RUN zqdgr build
 RUN upx passport
