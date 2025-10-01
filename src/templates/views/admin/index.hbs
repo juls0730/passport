@@ -17,24 +17,14 @@
     <section class="flex justify-center w-full">
         <div class="w-full sm:w-4/5 p-2.5">
             {{#each Categories}}
-            <div class="flex items-center" key="category-{{this.ID}}">
-                <div class="shrink-0 relative mr-2 h-full flex items-center justify-center">
-                    <img class="object-contain select-none" width="32" height="32" draggable="false" alt="{{this.Name}}"
-                        src="{{this.Icon}}" />
-                    <button onclick="selectIcon()"
-                        class="absolute inset-0 bg-highlight/80 hidden rounded-md text-base items-center justify-center"
-                        draggable="false">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"
-                            viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
-                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                stroke-width="2" d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5l5 5m-5-5v12" />
-                        </svg>
-                    </button>
+            <div class="flex items-center category-header" key="category-{{this.ID}}">
+                <div class="category-img" data-img-container>
+                    <img width="32" height="32" draggable="false" alt="{{this.Name}}" src="{{this.Icon}}" />
                 </div>
-                <h2 class="capitalize break-all border border-transparent">{{this.Name}}</h2>
+                <h2>{{this.Name}}</h2>
                 <div class="ml-2" data-edit-actions>
-                    <div class="flex flex-row gap-2">
-                        <button aria-label="Edit category" onclick="editCategory({{this.ID}})"
+                    <div class="flex flex-row gap-2" data-primary-actions>
+                        <button aria-label="Edit category" onclick="editCategory(this)"
                             class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                 viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
@@ -45,7 +35,7 @@
                                 </g>
                             </svg>
                         </button>
-                        <button aria-label="Delete category" onclick="deleteCategory({{this.ID}})"
+                        <button aria-label="Delete category" onclick="deleteCategory(this)"
                             class="text-error w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                 viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
@@ -55,8 +45,8 @@
                             </svg>
                         </button>
                     </div>
-                    <div class="hidden flex-row gap-2">
-                        <button aria-label="Confirm category edit" onclick="confirmCategoryEdit({{this.ID}})"
+                    <div class="hidden flex-row gap-2" data-confirm-actions>
+                        <button aria-label="Confirm category edit" onclick="confirmCategoryEdit()"
                             class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-success">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                 viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
@@ -64,7 +54,7 @@
                                     stroke-width="2" d="m5 12l5 5L20 7" />
                             </svg>
                         </button>
-                        <button aria-label="Cancel category edit" onclick="cancelCategoryEdit({{this.ID}})"
+                        <button aria-label="Cancel category edit" onclick="cancelEdit()"
                             class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-error">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                 viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
@@ -79,26 +69,17 @@
             <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
                 {{#each this.Links}}
                 <div key="link-{{this.ID}}" class="link-card relative admin">
-                    <div class="relative">
+                    <div class="relative" data-img-container>
                         <img width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
-                        <button onclick="selectIcon()"
-                            class="absolute inset-0 bg-highlight/80 hidden rounded-md text-base items-center justify-center"
-                            draggable="false">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"
-                                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
-                                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5l5 5m-5-5v12" />
-                            </svg>
-                        </button>
                     </div>
-                    <div class="flex-grow">
+                    <div class="flex-grow flex flex-col gap-y-px overflow-hidden" data-text-container>
                         <h3 class="border border-transparent">{{this.Name}}</h3>
-                        <p class="min-h-5">{{this.Description}}</p>
+                        <!-- add 2 to the height to account for the border -->
+                        <p class="min-h-[22px] border border-transparent">{{this.Description}}</p>
                     </div>
                     <div class="absolute right-1 top-1" data-edit-actions>
-                        <div class="flex flex-row gap-2">
-                            <button aria-label="Edit link" onclick="editLink({{this.ID}}, {{this.CategoryID}})"
+                        <div class="flex flex-row gap-2" data-primary-actions>
+                            <button aria-label="Edit link" onclick="editLink(this)"
                                 class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                     viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
@@ -109,7 +90,7 @@
                                     </g>
                                 </svg>
                             </button>
-                            <button aria-label="Delete link" onclick="deleteLink({{this.ID}}, {{this.CategoryID}})"
+                            <button aria-label="Delete link" onclick="deleteLink(this)"
                                 class="text-error w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                     viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
@@ -119,9 +100,8 @@
                                 </svg>
                             </button>
                         </div>
-                        <div class="hidden flex-row gap-2">
-                            <button aria-label="Confirm link edit"
-                                onclick="confirmLinkEdit({{this.ID}}, {{this.CategoryID}})"
+                        <div class="hidden flex-row gap-2" data-confirm-actions>
+                            <button aria-label="Confirm link edit" onclick="confirmLinkEdit()"
                                 class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-success">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                     viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
@@ -129,8 +109,7 @@
                                         stroke-linejoin="round" stroke-width="2" d="m5 12l5 5L20 7" />
                                 </svg>
                             </button>
-                            <button aria-label="Cancel link edit"
-                                onclick="cancelLinkEdit({{this.ID}}, {{this.CategoryID}})"
+                            <button aria-label="Cancel link edit" onclick="cancelEdit()"
                                 class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-error">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                     viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
@@ -155,7 +134,7 @@
                 </div>
             </div>
             {{/each}}
-            <div class="flex items-center">
+            <div class="flex items-center" id="add-category-button">
                 <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                     <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                         stroke-width="2" d="M12 5v14m-7-7h14" />
@@ -179,6 +158,91 @@
     </div>
 </div>
 
+<!-- store the icon herre temporarily so that we can teleport it to where we need it when we edit -->
+<button id="select-icon-button" onclick="selectIcon()"
+    class="absolute inset-0 bg-highlight/80 hidden rounded-md text-base items-center justify-center" draggable="false">
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"
+        viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5l5 5m-5-5v12" />
+    </svg>
+</button>
+
+<!-- store a blank link card so that if we add a new link we can clone it to make the editing experience easier -->
+<div id="template-link-card" class="hidden">
+    <div class="relative" data-img-container>
+        <img width="64" height="64" draggable="false" />
+    </div>
+    <div class="flex-grow flex flex-col gap-y-px overflow-hidden" data-text-container>
+        <h3 class="border border-transparent"></h3>
+        <!-- add 2 to the height to account for the border -->
+        <p class="min-h-[22px] border border-transparent"></p>
+    </div>
+</div>
+
+<div id="template-category" class="hidden">
+    <div class="flex items-center category-header">
+        <div class="category-img" data-img-container>
+            <img width="32" height="32" draggable="false" />
+        </div>
+        <h2></h2>
+    </div>
+    <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
+        <div class="rounded-2xl border border-dashed border-subtle p-2.5 flex flex-row items-center hover:underline
+            transition-[box-shadow,transform] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 pointer-cursor select-none
+            cursor-pointer">
+            <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 5v14m-7-7h14" />
+            </svg>
+            <div>
+                <h3>Add a link</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="template-edit-actions" class="hidden" data-edit-actions>
+    <div class="flex flex-row gap-2" data-primary-actions>
+        <button
+            class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                    <path d="M7 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1" />
+                    <path d="M20.385 6.585a2.1 2.1 0 0 0-2.97-2.97L9 12v3h3zM16 5l3 3" />
+                </g>
+            </svg>
+        </button>
+        <button
+            class="text-error w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+            </svg>
+        </button>
+    </div>
+    <div class="hidden flex-row gap-2" data-confirm-actions>
+        <button
+            class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="m5 12l5 5L20 7" />
+            </svg>
+        </button>
+        <button
+            class="w-fit h-fit flex p-1 bg-highlight-sm shadow-sm border border-highlight/70 rounded-full hover:filter hover:brightness-125 active:brightness-95 cursor-pointer transition-[filter] ease-[cubic-bezier(0.45,0,0.55,1)] duration-150 text-error">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0m15.364-6.364L5.636 18.364" />
+            </svg>
+        </button>
+    </div>
+</div>
+
 <script>
     // idfk what this variable capitalization is, it's a mess
     let modalContainer = document.getElementById("modal-container");
@@ -187,8 +251,6 @@
     let iconUploader = document.getElementById("icon-upload");
     let targetCategoryID = null;
     let activeModal = null;
-
-    // errpr check the form and add the invalid class if it's invalid
 
     /**
     * Submits a form to the given URL
@@ -217,7 +279,7 @@
     }
 
     /**
-    * Initializes the form for the given form
+    * Adds an event listener for the given from to error check after the first submit 
     * @param {"category" | "link"} form - The form to initialize
     * @returns {void}
     */
@@ -229,14 +291,159 @@
         });
     }
 
+    /**
+    * Currently editing link or category
+    * @typedef {Object} actionButtonObj
+    * @property {string} clickAction - The function to be called when this button is clicked
+    * @property {string} label - The label of the button
+    */
+
+    /**
+    * Clones the edit actions template and returns it
+    * @param {[actionButtonObj, actionButtonObj]} primaryActions - The primary actions to clone
+    * @param {[actionButtonObj, actionButtonObj]} confirmActions - The confirm actions to clone
+    * @returns {HTMLElement} The cloned edit actions element
+    */
+    function cloneEditActions(primaryActions, confirmActions) {
+        let editActions = document.getElementById("template-edit-actions").cloneNode(true);
+        editActions.removeAttribute("id");
+        editActions.classList.remove("hidden");
+
+        let i = 0;
+        for (i = 0; i < primaryActions.length; i++) {
+            let actionButtonObj = primaryActions[i];
+
+            let actionButton = editActions.querySelector(`div[data-primary-actions] button:nth-child(${i + 1})`);
+            actionButton.setAttribute("onclick", actionButtonObj.clickAction);
+            actionButton.setAttribute("aria-label", actionButtonObj.label);
+        }
+
+        for (i = 0; i < primaryActions.length; i++) {
+            let actionButtonObj = confirmActions[i];
+
+            let actionButton = editActions.querySelector(`div[data-confirm-actions] button:nth-child(${i + 1})`);
+            actionButton.setAttribute("onclick", actionButtonObj.clickAction);
+            actionButton.setAttribute("aria-label", actionButtonObj.label);
+        }
+
+        return editActions;
+    }
+
     addErrorListener("link");
     document.getElementById("link-form").addEventListener("submit", async (event) => {
-        await submitRequest(event, `/api/category/${targetCategoryID}/link`, "link");
+        event.preventDefault();
+        let data = new FormData(event.target);
+
+        let res = await fetch(`/api/category/${targetCategoryID}/link`, {
+            method: "POST",
+            body: data
+        });
+
+        if (res.status === 201) {
+            let json = await res.json();
+
+            document.getElementById(`link-form`).reset();
+            let category = document.querySelector(`[key=category-${targetCategoryID}]`);
+            console.log(category);
+            let linkGrid = category.nextElementSibling;
+
+            let newLinkCard = document.getElementById("template-link-card").cloneNode(true);
+            newLinkCard.removeAttribute("id");
+
+            newLinkCard.classList.remove("hidden");
+            newLinkCard.classList.add("link-card", "admin", "relative");
+
+            newLinkCard.querySelector("div[data-img-container] img").src = await processFile(data.get("icon"));
+            newLinkCard.querySelector("div[data-img-container] img").alt = data.get("name");
+
+            newLinkCard.querySelector("h3").textContent = data.get("name");
+            newLinkCard.querySelector("p").textContent = data.get("description");
+
+            newLinkCard.setAttribute("key", `link-${json.link.id}`);
+
+            let editActions = cloneEditActions([{
+                clickAction: "editLink(this)",
+                label: "Edit link"
+            }, {
+                clickAction: "deleteLink(this)",
+                label: "Delete link"
+            }], [{
+                clickAction: "confirmLinkEdit()",
+                label: "Confirm link edit"
+            }, {
+                clickAction: "cancelEdit()",
+                label: "Cancel link edit"
+            }]);
+
+            editActions.classList.add("absolute", "right-1", "top-1");
+
+            newLinkCard.appendChild();
+
+            // append the card as the second to last element
+            linkGrid.insertBefore(newLinkCard, linkGrid.lastElementChild);
+            closeModal("link");
+        } else {
+            let json = await res.json();
+            document.getElementById(`link-message`).innerText = json.message;
+        }
     });
 
     addErrorListener("category");
     document.getElementById("category-form").addEventListener("submit", async (event) => {
-        await submitRequest(event, `/api/category`, "category");
+        event.preventDefault();
+        let data = new FormData(event.target);
+
+        let res = await fetch(`/api/category`, {
+            method: "POST",
+            body: data
+        });
+
+        if (res.status === 201) {
+            let json = await res.json();
+
+            document.getElementById(`category-form`).reset();
+            let newCategory = document.getElementById("template-category").cloneNode(true);
+
+            let linkGrid = newCategory.querySelector("div:nth-child(2)");
+            let categoryHeader = newCategory.querySelector(".category-header");
+            categoryHeader.setAttribute("key", `category-${json.category.id}`);
+            categoryHeader.querySelector("h2").textContent = json.category.name;
+
+            let editActions = cloneEditActions([{
+                clickAction: "editCategory(this)",
+                label: "Edit category"
+            }, {
+                clickAction: "deleteCategory(this)",
+                label: "Delete category"
+            }], [{
+                clickAction: "confirmCategoryEdit()",
+                label: "Confirm category edit"
+            }, {
+                clickAction: "cancelEdit()",
+                label: "Cancel category edit"
+            }]);
+
+            editActions.classList.add("ml-2");
+
+            console.log(categoryHeader, editActions);
+
+            categoryHeader.appendChild(editActions);
+
+            let categoryImg = categoryHeader.querySelector(".category-img");
+
+            categoryImg.querySelector("img").src = await processFile(data.get("icon"));
+
+            linkGrid.querySelector("div").setAttribute("onclick", `openModal('link', ${json.category.id})`);
+
+            let addCategoryButton = document.getElementById("add-category-button");
+            addCategoryButton.parentElement.insertBefore(categoryHeader, addCategoryButton);
+            addCategoryButton.parentElement.insertBefore(linkGrid, addCategoryButton);
+
+            closeModal("category");
+        } else {
+            let json = await res.json();
+            document.getElementById(`category-message`).innerText = json.message;
+        }
     });
 
     // when the background is clicked, close the modal
@@ -253,6 +460,7 @@
     /**
     * Processes a file and returns a data URL.
     * @param {File} file The file to process.
+    * @returns {Promise<string>} A promise that resolves to a data URL.
     */
     async function processFile(file) {
         let reader = new FileReader();
@@ -262,11 +470,7 @@
                 reader.addEventListener("load", async (event) => {
                     let svgString = event.target.result;
 
-                    console.log(svgString);
-
                     svgString = svgString.replaceAll("currentColor", "oklch(87% 0.015 286)");
-
-                    console.log(svgString);
 
                     // turn svgString into a data URL
                     resolve("data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgString))));
@@ -296,8 +500,6 @@
         if (targetedImageElement === null) {
             throw new Error("icon upload element was clicked, but no target image element was set");
         }
-
-        console.log(file);
 
         let dataURL = await processFile(file);
         targetedImageElement.src = dataURL;
@@ -338,72 +540,130 @@
         targetCategoryID = null;
     }
 
-    let currentlyEditingLink = {
-        ID: null,
-        categoryID: null,
-        originalText: null,
-        originalDescription: null,
-        icon: null,
-    };
+    /**
+    * Currently editing link or category
+    * @typedef {Object} currentlyEditingObj
+    * @property {"link" | "category" | undefined} type - The type of the currently editing element
+    * @property {string | undefined} ID - The ID of the currently editing element
+    * @property {string | undefined} categoryID - The ID of the category the currently editing element belongs to
+    * @property {string | undefined} originalText - The original text of the currently editing element
+    * @property {string | undefined} originalDescription - The original description of the currently editing element
+    * @property {string | undefined} icon - The original icon of the currently editing element
+    * @property {Function | undefined} cleanup - The cleanup function for the currently editing element
+    */
 
-    async function editLink(linkID, categoryID) {
-        if (currentlyEditingLink.ID !== null) {
+    /** @type {currentlyEditingObj} */
+    let currentlyEditing = {};
+
+    /**
+    * Teleports the upload overlay to the given image node
+    * @param {HTMLElement} target The image node to teleport the upload overlay into
+    * @param {boolean} [hidden=false] Whether to hide the upload overlay
+    */
+    function teleportUploadOverlay(target, hidden = false) {
+        let uploadOverlay = document.getElementById("select-icon-button");
+        let teleportedOverlay = target.appendChild(uploadOverlay.cloneNode(true));
+        uploadOverlay.remove();
+
+        if (hidden) {
+            teleportedOverlay.classList.add("hidden");
+            teleportedOverlay.classList.remove("flex");
+        } else {
+            teleportedOverlay.classList.remove("hidden");
+            teleportedOverlay.classList.add("flex");
+        }
+    }
+
+    function cancelEdit() {
+        if (currentlyEditing.cleanup !== undefined) {
+            // this function could be called via deleting something, which doesn't have a cleanup function
+            currentlyEditing.cleanup();
+        }
+
+
+        switch (currentlyEditing.type) {
+            case "link":
+                cancelLinkEdit(currentlyEditing.ID, currentlyEditing.categoryID, currentlyEditing.originalText, currentlyEditing.originalDescription);
+                break;
+            case "category":
+                cancelCategoryEdit(currentlyEditing.ID, currentlyEditing.originalText);
+                break;
+            default:
+                console.error("Unknown currentlyEditing type");
+                break;
+        }
+
+        currentlyEditing = {};
+    }
+
+    /**
+    * Edits the link with the given html element
+    * @param {HTMLElement} target The target element that was clicked
+    */
+    function editLink(target) {
+        // we do it in this dynamic way so that if we add a new link without refreshing the page, it still works
+        let linkID = target.closest(".link-card").getAttribute("key").split("-")[1];
+        let categoryID = target.closest(".link-card").parentElement.previousElementSibling.getAttribute("key").split("-")[1];
+
+        if (currentlyEditing.ID !== undefined) {
             // cancel the edit if it's already in progress
-            cancelLinkEdit(currentlyEditingLink.ID, currentlyEditingCategory.categoryID);
+            cancelEdit();
         }
 
         let linkEl = document.querySelector(`[key=link-${linkID}]`);
-        let linkImg = linkEl.querySelector("div:first-child img");
-        let fileUploaderOverlay = linkImg.nextElementSibling;
-        let linkName = linkEl.querySelector("div:nth-child(2) h3");
-        let linkDesc = linkEl.querySelector("div:nth-child(2) p");
+        let linkImg = linkEl.querySelector("div[data-img-container] img");
+        teleportUploadOverlay(linkImg.parentElement);
+        let linkName = linkEl.querySelector("div[data-text-container] h3");
+        let linkDesc = linkEl.querySelector("div[data-text-container] p");
         let editActions = linkEl.querySelector("[data-edit-actions]");
 
-        currentlyEditingLink.ID = linkID;
-        currentlyEditingCategory.categoryID = categoryID;
-        currentlyEditingLink.originalText = linkName.textContent;
-        currentlyEditingLink.originalDescription = linkDesc.textContent;
-        currentlyEditingLink.icon = linkImg.src;
-
-        console.log(currentlyEditingLink)
+        currentlyEditing = {
+            type: "link",
+            ID: linkID,
+            categoryID: categoryID,
+            originalText: linkName.textContent,
+            originalDescription: linkDesc.textContent,
+            icon: linkImg.src
+        };
 
         iconUploader.accept = "image/*";
         targetedImageElement = linkImg;
 
-        editActions.querySelector("div").classList.add("hidden");
-        editActions.querySelector("div").classList.remove("flex");
+        editActions.querySelector("div[data-primary-actions]").classList.add("hidden");
+        editActions.querySelector("div[data-primary-actions]").classList.remove("flex");
 
-        editActions.querySelector("div:nth-child(2)").classList.remove("hidden");
-        editActions.querySelector("div:nth-child(2)").classList.add("flex");
+        editActions.querySelector("div[data-confirm-actions]").classList.remove("hidden");
+        editActions.querySelector("div[data-confirm-actions]").classList.add("flex");
 
-        fileUploaderOverlay.classList.remove("hidden");
-        fileUploaderOverlay.classList.add("flex");
+        let nameCleanup = replaceWithResizableTextarea(linkName, false);
+        let descCleanup = replaceWithResizableTextarea(linkDesc);
 
-        replaceWithResizableInput(linkName);
-        replaceWithResizableTextarea(linkDesc);
+        currentlyEditing.cleanup = () => {
+            nameCleanup();
+            descCleanup();
+        }
     }
 
-    async function confirmLinkEdit(linkID, categoryID) {
-        let linkEl = document.querySelector(`[key=link-${linkID}]`);
-        let linkImg = linkEl.querySelector("div:first-child img");
+    async function confirmLinkEdit() {
+        let linkEl = document.querySelector(`[key=link-${currentlyEditing.ID}]`);
+        let linkImg = linkEl.querySelector("div[data-img-container] img");
         let fileUploaderOverlay = linkImg.nextElementSibling;
-        let linkNameInput = linkEl.querySelector("input");
-        let linkDescInput = linkEl.querySelector("textarea");
+        let linkNameInput = linkEl.querySelector("textarea");
+        let linkDescInput = linkEl.querySelector("textarea:nth-child(2)");
         let editActions = linkEl.querySelector("[data-edit-actions]");
 
         linkNameInput.value = linkNameInput.value.trim();
         linkDescInput.value = linkDescInput.value.trim();
-        console.log(linkNameInput.value);
         if (linkNameInput.value === "") {
             return;
         }
 
         let formData = new FormData();
-        if (linkNameInput.value !== currentlyEditingLink.originalText) {
+        if (linkNameInput.value !== currentlyEditing.originalText) {
             formData.append("name", linkNameInput.value)
         }
 
-        if (linkDescInput.value !== currentlyEditingLink.originalDescription) {
+        if (linkDescInput.value !== currentlyEditing.originalDescription) {
             formData.append("description", linkDescInput.value)
         }
 
@@ -416,74 +676,74 @@
             return;
         }
 
-        let res = await fetch(`/api/category/${categoryID}/link/${linkID}`, {
+        let res = await fetch(`/api/category/${currentlyEditing.categoryID}/link/${currentlyEditing.ID}`, {
             method: "PATCH",
             body: formData
         });
 
         if (res.status === 200) {
-
             iconUploader.value = "";
 
-            currentlyEditingLink.icon = null;
-
-            cancelLinkEdit(currentlyEditingLink.ID, currentlyEditingCategory.categoryID, linkNameInput.value || currentlyEditingLink.originalText, linkDescInput.value || currentlyEditingLink.originalDescription);
-            currentlyEditingLink.originalText = null;
-            currentlyEditingLink.originalDescription = null;
-
-            currentlyEditingLink.ID = null;
+            currentlyEditing.icon = undefined;
+            cancelLinkEdit(currentlyEditing.ID, currentlyEditing.categoryID, linkNameInput.value || currentlyEditing.originalText, linkDescInput.value || currentlyEditing.originalDescription);
+            currentlyEditing = {};
         } else {
             console.error("Failed to edit category");
         }
     }
 
-    async function cancelLinkEdit(linkID, categoryID, text = undefined, description = undefined) {
+    function cancelLinkEdit(linkID, categoryID, text = undefined, description = undefined) {
         let linkEl = document.querySelector(`[key=link-${linkID}]`);
-        let linkInput = linkEl.querySelector("input");
-        let linkTextarea = linkEl.querySelector("textarea");
-        let linkImg = linkEl.querySelector("div:first-child img");
+        let linkInput = linkEl.querySelector("textarea");
+        let linkTextarea = linkEl.querySelector("textarea:nth-child(2)");
+        let linkImg = linkEl.querySelector("div[data-img-container] img");
         let fileUploaderOverlay = linkImg.nextElementSibling;
         let editActions = linkEl.querySelector("[data-edit-actions]");
 
-        console.log(linkInput);
-        console.log(editActions);
-
-        if (currentlyEditingLink.icon !== null) {
-            linkImg.src = currentlyEditingLink.icon;
+        if (currentlyEditing.icon !== undefined) {
+            linkImg.src = currentlyEditing.icon;
         }
 
-        editActions.querySelector("div").classList.remove("hidden");
-        editActions.querySelector("div").classList.add("flex");
+        editActions.querySelector("div[data-primary-actions]").classList.remove("hidden");
+        editActions.querySelector("div[data-primary-actions]").classList.add("flex");
 
-        editActions.querySelector("div:nth-child(2)").classList.add("hidden");
-        editActions.querySelector("div:nth-child(2)").classList.remove("flex");
+        editActions.querySelector("div[data-confirm-actions]").classList.add("hidden");
+        editActions.querySelector("div[data-confirm-actions]").classList.remove("flex");
 
-        fileUploaderOverlay.classList.add("hidden");
-        fileUploaderOverlay.classList.remove("flex");
+        // teleport the upload overlay back to the body
+        teleportUploadOverlay(document.documentElement, true);
 
         if (text === undefined) {
-            text = currentlyEditingLink.originalText;
+            text = currentlyEditing.originalText;
         }
 
         if (description === undefined) {
-            description = currentlyEditingLink.originalDescription;
+            description = currentlyEditing.originalDescription;
         }
 
         restoreElementFromInput(linkInput, text);
         restoreElementFromInput(linkTextarea, description);
 
-        currentlyEditingLink.ID = null;
+        currentlyEditing = {};
         targetedImageElement = null;
     }
 
-    let currentlyDeletingLink = {
-        ID: null,
-        categoryID: null,
-    };
+    /**
+    * Deletes the link with the given html element
+    * @param {HTMLElement} target The target element that was clicked
+    */
+    function deleteLink(target) {
+        // we do it in this dynamic way so that if we add a new link without refreshing the page, it still works
+        let linkID = target.closest(".link-card").getAttribute("key").split("-")[1];
+        let categoryID = target.closest(".link-card").parentElement.previousElementSibling.getAttribute("key").split("-")[1];
 
-    async function deleteLink(linkID, categoryID) {
-        currentlyDeletingLink.ID = linkID;
-        currentlyDeletingLink.categoryID = categoryID;
+        if (currentlyEditing.ID !== undefined) {
+            // cancel the edit if it's already in progress
+            cancelEdit();
+        }
+
+        currentlyEditing.ID = linkID;
+        currentlyEditing.categoryID = categoryID;
 
         let linkNameSpan = document.getElementById("link-name");
         linkNameSpan.textContent = document.querySelector(`[key=link-${linkID}] h3`).textContent;
@@ -492,60 +752,60 @@
     }
 
     async function confirmDeleteLink() {
-        let res = await fetch(`/api/category/${currentlyDeletingLink.categoryID}/link/${currentlyDeletingLink.ID}`, {
+        let res = await fetch(`/api/category/${currentlyEditing.categoryID}/link/${currentlyEditing.ID}`, {
             method: "DELETE"
         });
 
         if (res.status === 200) {
-            let linkEl = document.querySelector(`[key="link-${currentlyDeletingLink.ID}"]`);
+            let linkEl = document.querySelector(`[key="link-${currentlyEditing.ID}"]`);
             linkEl.remove();
 
             closeModal();
+            currentlyEditing = {};
         }
     }
 
-    let currentlyEditingCategory = {
-        ID: null,
-        originalText: null,
-        icon: null,
-    };
+    /**
+    * Edits the category with the given html element
+    * @param {HTMLElement} target The target element that was clicked
+    */
+    function editCategory(target) {
+        let categoryID = target.closest(".category-header").getAttribute("key").split("-")[1];
 
-    async function editCategory(categoryID) {
-        if (currentlyEditingCategory.ID !== null) {
+        if (currentlyEditing.ID !== undefined) {
             // cancel the edit if it's already in progress
-            cancelCategoryEdit(currentlyEditingCategory.ID);
+            cancelEdit();
         }
-
-        currentlyEditingCategory.ID = categoryID;
 
         let categoryEl = document.querySelector(`[key=category-${categoryID}]`);
         let categoryName = categoryEl.querySelector("h2");
-        let categoryIcon = categoryEl.querySelector("div img");
-        let fileUploaderOverlay = categoryIcon.nextElementSibling;
+        let categoryIcon = categoryEl.querySelector("div[data-img-container] img");
+        teleportUploadOverlay(categoryIcon.parentElement);
         let editActions = categoryEl.querySelector("[data-edit-actions]");
 
-        currentlyEditingCategory.originalText = categoryName.textContent;
-        currentlyEditingCategory.icon = categoryIcon.src;
+        currentlyEditing = {
+            type: "category",
+            ID: categoryID,
+            originalText: categoryName.textContent,
+            icon: categoryIcon.src
+        };
 
         iconUploader.accept = "image/svg+xml";
         targetedImageElement = categoryIcon;
 
-        editActions.querySelector("div").classList.add("hidden");
-        editActions.querySelector("div").classList.remove("flex");
+        editActions.querySelector("div[data-primary-actions]").classList.add("hidden");
+        editActions.querySelector("div[data-primary-actions]").classList.remove("flex");
 
-        editActions.querySelector("div:nth-child(2)").classList.remove("hidden");
-        editActions.querySelector("div:nth-child(2)").classList.add("flex");
+        editActions.querySelector("div[data-confirm-actions]").classList.remove("hidden");
+        editActions.querySelector("div[data-confirm-actions]").classList.add("flex");
 
-        fileUploaderOverlay.classList.remove("hidden");
-        fileUploaderOverlay.classList.add("flex");
-
-        replaceWithResizableInput(categoryName);
+        currentlyEditing.cleanup = replaceWithResizableTextarea(categoryName, false);
     }
 
-    async function confirmCategoryEdit(categoryID) {
-        let categoryEl = document.querySelector(`[key=category-${categoryID}]`);
-        let categoryInput = categoryEl.querySelector("input");
-        let categoryIcon = categoryEl.querySelector("div img");
+    async function confirmCategoryEdit() {
+        let categoryEl = document.querySelector(`[key=category-${currentlyEditing.ID}]`);
+        let categoryInput = categoryEl.querySelector("textarea");
+        let categoryIcon = categoryEl.querySelector("div[data-img-container] img");
         let fileUploaderOverlay = categoryIcon.nextElementSibling;
         let editActions = categoryEl.querySelector("[data-edit-actions]");
 
@@ -556,7 +816,7 @@
         categoryInput.value = categoryInput.value.trim();
 
         let formData = new FormData();
-        if (categoryInput.value !== currentlyEditingCategory.originalText) {
+        if (categoryInput.value !== currentlyEditing.originalText) {
             formData.append("name", categoryInput.value)
         }
 
@@ -569,7 +829,7 @@
             return;
         }
 
-        let res = await fetch(`/api/category/${categoryID}`, {
+        let res = await fetch(`/api/category/${currentlyEditing.ID}`, {
             method: "PATCH",
             body: formData
         });
@@ -578,52 +838,57 @@
 
             iconUploader.value = "";
 
-            cancelCategoryEdit(categoryID, categoryInput.value || currentlyEditingCategory.originalText);
+            currentlyEditing.icon = undefined;
 
-            currentlyEditingCategory.icon = null;
-            currentlyEditingCategory.originalText = null;
+            cancelCategoryEdit(currentlyEditing.ID, categoryInput.value || currentlyEditing.originalText);
 
-            currentlyEditingCategory.ID = null;
+            currentlyEditing = {};
         } else {
             console.error("Failed to edit category");
         }
     }
 
-    async function cancelCategoryEdit(categoryID, text = undefined) {
+    function cancelCategoryEdit(categoryID, text = undefined) {
         let categoryEl = document.querySelector(`[key=category-${categoryID}]`);
-        let categoryInput = categoryEl.querySelector("input");
+        let categoryInput = categoryEl.querySelector("textarea");
         let categoryIcon = categoryEl.querySelector("div img");
         let fileUploaderOverlay = categoryIcon.nextElementSibling;
         let editActions = categoryEl.querySelector("[data-edit-actions]");
 
-        console.log(categoryInput);
-        console.log(editActions);
-
-        if (currentlyEditingCategory.icon !== null) {
-            categoryIcon.src = currentlyEditingCategory.icon;
+        if (currentlyEditing.icon !== undefined) {
+            categoryIcon.src = currentlyEditing.icon;
         }
 
-        editActions.querySelector("div").classList.remove("hidden");
-        editActions.querySelector("div").classList.add("flex");
+        teleportUploadOverlay(document.documentElement, true);
 
-        editActions.querySelector("div:nth-child(2)").classList.add("hidden");
-        editActions.querySelector("div:nth-child(2)").classList.remove("flex");
+        editActions.querySelector("div[data-primary-actions]").classList.remove("hidden");
+        editActions.querySelector("div[data-primary-actions]").classList.add("flex");
+
+        editActions.querySelector("div[data-confirm-actions]").classList.add("hidden");
+        editActions.querySelector("div[data-confirm-actions]").classList.remove("flex");
 
         fileUploaderOverlay.classList.remove("flex");
         fileUploaderOverlay.classList.add("hidden");
 
-        restoreElementFromInput(categoryInput, text || currentlyEditingCategory.originalText);
+        restoreElementFromInput(categoryInput, text || currentlyEditing.originalText);
 
-        currentlyEditingCategory.ID = null;
+        currentlyEditing = {};
         targetedImageElement = null;
     }
 
-    let currentlyDeletingCategory = {
-        ID: null,
-    };
+    /**
+    * Deletes the category with the given html element
+    * @param {HTMLElement} target The target element that was clicked
+    */
+    function deleteCategory(target) {
+        let categoryID = target.closest(".category-header").getAttribute("key").split("-")[1];
 
-    async function deleteCategory(categoryID) {
-        currentlyDeletingCategory.ID = categoryID;
+        if (currentlyEditing.ID !== undefined) {
+            // cancel the edit if it's already in progress
+            cancelEdit();
+        }
+
+        currentlyEditing.ID = categoryID;
 
         let categoryNameSpan = document.getElementById("category-name");
         categoryNameSpan.textContent = document.querySelector(`[key=category-${categoryID}] h2`).textContent;
@@ -632,12 +897,12 @@
     }
 
     async function confirmDeleteCategory() {
-        let res = await fetch(`/api/category/${currentlyDeletingCategory.ID}`, {
+        let res = await fetch(`/api/category/${currentlyEditing.ID}`, {
             method: "DELETE"
         });
 
         if (res.status === 200) {
-            let categoryEl = document.querySelector(`[key="category-${currentlyDeletingCategory.ID}"]`);
+            let categoryEl = document.querySelector(`[key="category-${currentlyEditing.ID}"]`);
             // get the next element and remove it (its the link grid)
             let nextEl = categoryEl.nextElementSibling;
             nextEl.remove();
@@ -647,95 +912,28 @@
         }
     }
 
+    const stylesToCopy = [
+        'font-family', 'font-size', 'font-weight', 'font-style', 'color',
+        'line-height', 'letter-spacing', 'text-transform', 'text-align',
+        'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+        'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
+        'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
+        'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+        'border-radius', 'border',
+        'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+    ];
+
     /**
-    * Replaces an H2 element with a resizable input field that matches its initial text and styling.
-    * @param {HTMLElement} targetEl The element to replace.
+     * Replaces an element with a resizable textarea containing the same text.
+     * @param {HTMLElement} targetEl The element to replace.
+     * @param {boolean} [fill=true] Whether to make the textarea fill the available space, or grow with the text inside.
+     * @returns (() => void) A cleanup function to remove event listeners
     */
-    function replaceWithResizableInput(targetEl) {
+    function replaceWithResizableTextarea(targetEl, fill = true) {
         const originalText = targetEl.textContent;
         const computedStyle = window.getComputedStyle(targetEl);
-
-        const inputElement = document.createElement('input');
-        inputElement.type = 'text';
-        inputElement.value = originalText;
-        inputElement.className = 'resizable-input';
-        inputElement.placeholder = 'Enter title...';
-        inputElement.dataset.originalElementType = targetEl.tagName;
-        inputElement.dataset.originalClassName = targetEl.className;
-
-        const stylesToCopy = [
-            'font-family', 'font-size', 'font-weight', 'font-style', 'color',
-            'line-height', 'letter-spacing', 'text-transform', 'text-align',
-            'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-            'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
-            'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
-            'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
-            'border-radius', 'box-sizing',
-            'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-            'height'
-        ];
-
-        stylesToCopy.forEach(prop => {
-            inputElement.style[prop] = computedStyle[prop];
-        });
-
-        inputElement.style.display = 'inline-block';
-        inputElement.style.backgroundColor = 'var(--color-base)';
-        inputElement.style.border = '1px solid var(--color-highlight-sm)';
-        inputElement.style.borderRadius = '0.375rem';
-        inputElement.maxLength = 50;
-
-        /**
-         * Function to measure the text width accurately and apply it to the input.
-         * @param {HTMLInputElement} inputEl The input element to resize.
-         */
-        const resizeInput = (inputEl) => {
-            const tempSpan = document.createElement('span');
-            const currentInputComputedStyle = window.getComputedStyle(inputEl);
-
-            const textStylesToCopy = [
-                'font-family', 'font-size', 'font-weight', 'font-style', 'letter-spacing',
-                'text-transform', 'line-height'
-            ];
-            textStylesToCopy.forEach(prop => {
-                tempSpan.style[prop] = currentInputComputedStyle[prop];
-            });
-
-            tempSpan.style.position = 'absolute';
-            tempSpan.style.visibility = 'hidden';
-            tempSpan.style.whiteSpace = 'nowrap';
-            tempSpan.textContent = inputEl.value === '' ? inputEl.placeholder || 'W' : inputEl.value;
-
-            document.body.appendChild(tempSpan);
-            let measuredTextWidth = tempSpan.offsetWidth;
-            document.body.removeChild(tempSpan);
-
-            // Add a small buffer for the caret and a bit of extra space
-            const caretBuffer = 10;
-            let finalWidth = measuredTextWidth + caretBuffer;
-
-            const minWidth = 100;
-            finalWidth = Math.max(finalWidth, minWidth);
-
-            if (currentInputComputedStyle.boxSizing === 'border-box') {
-                const hPadding = parseFloat(currentInputComputedStyle.paddingLeft) + parseFloat(currentInputComputedStyle.paddingRight);
-                const hBorder = parseFloat(currentInputComputedStyle.borderLeftWidth) + parseFloat(currentInputComputedStyle.borderRightWidth);
-                inputEl.style.width = (finalWidth + hPadding + hBorder) + 'px';
-            } else {
-                inputEl.style.width = finalWidth + 'px';
-            }
-        };
-
-        setTimeout(() => resizeInput(inputElement), 0);
-        inputElement.addEventListener('input', () => resizeInput(inputElement));
-        targetEl.parentNode.replaceChild(inputElement, targetEl);
-
-        inputElement.focus();
-    }
-
-    function replaceWithResizableTextarea(targetEl) {
-        const originalText = targetEl.textContent;
-        const computedStyle = window.getComputedStyle(targetEl);
+        const caretBuffer = 10;
+        let maxWidth = parseFloat(targetEl.parentElement.clientWidth) - 2;
 
         const inputElement = document.createElement('textarea');
         inputElement.value = originalText;
@@ -743,18 +941,6 @@
         inputElement.placeholder = 'Enter title...';
         inputElement.dataset.originalElementType = targetEl.tagName;
         inputElement.dataset.originalClassName = targetEl.className;
-
-        const stylesToCopy = [
-            'font-family', 'font-size', 'font-weight', 'font-style', 'color',
-            'line-height', 'letter-spacing', 'text-transform', 'text-align',
-            'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-            'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
-            'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
-            'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
-            'border-radius', 'box-sizing',
-            'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-            'height'
-        ];
 
         stylesToCopy.forEach(prop => {
             inputElement.style[prop] = computedStyle[prop];
@@ -765,20 +951,76 @@
         inputElement.style.borderRadius = '0.375rem';
         inputElement.style.resize = 'none';
         inputElement.style.overflow = 'hidden';
-        inputElement.style.width = '100%';
+        // subtract 2 to account for the border since we are using content-box
         inputElement.style.outline = 'none';
+        inputElement.style.boxSizing = 'content-box';
         inputElement.maxLength = 150;
+        if (fill) {
+            inputElement.style.width = 'clac(100% - 2px)';
+        } else {
+            targetEl.style.width = 'fit-content';
+            let targetElWidth = parseFloat(targetEl.getBoundingClientRect().width - 2 + caretBuffer);
+            if (targetElWidth > maxWidth) {
+                targetElWidth = maxWidth;
+            }
+
+            inputElement.style.width = targetElWidth + "px";
+        }
+        inputElement.style.height = (parseFloat(targetEl.getBoundingClientRect().height) - 2) + "px";
 
         function resize() {
+            maxWidth = parseFloat(inputElement.parentElement.getBoundingClientRect().width) - 2;
+
+            if (!fill) {
+                const tempSpan = document.createElement('span');
+                // subtract 2 to account for the border since we are using content-box
+                const currentInputComputedStyle = window.getComputedStyle(inputElement);
+
+                const textStylesToCopy = [
+                    'font-family', 'font-size', 'font-weight', 'font-style', 'letter-spacing',
+                    'text-transform', 'line-height'
+                ];
+                textStylesToCopy.forEach(prop => {
+                    tempSpan.style[prop] = currentInputComputedStyle[prop];
+                });
+
+                tempSpan.style.position = 'absolute';
+                tempSpan.style.visibility = 'hidden';
+                tempSpan.style.whiteSpace = 'nowrap';
+                tempSpan.textContent = inputElement.value === '' ? inputElement.placeholder || 'W' : inputElement.value;
+
+                document.body.appendChild(tempSpan);
+                let measuredTextWidth = Math.min(tempSpan.offsetWidth, maxWidth);
+                document.body.removeChild(tempSpan);
+
+                if (measuredTextWidth + caretBuffer < maxWidth) {
+                    // add a small buffer for the caret and a bit of extra space
+                    measuredTextWidth += caretBuffer;
+                } else {
+                    measuredTextWidth = maxWidth;
+                }
+
+
+                // add 2 to the width to account for the border
+                inputElement.style.width = `${measuredTextWidth}px`;
+            }
+
+            // we set the height = 0 so that if a row is deleted, the height will be recalculated correctly
             inputElement.style.height = "0px";
-            inputElement.style.height = inputElement.scrollHeight + "px";
+            inputElement.style.height = (inputElement.scrollHeight) + "px";
         }
 
-        setTimeout(() => resize(), 0);
+        // const debouncedResize = debounce(resize, 150);
+
         inputElement.addEventListener('input', () => resize());
         targetEl.parentNode.replaceChild(inputElement, targetEl);
-
         inputElement.focus();
+
+        window.addEventListener('resize', resize);
+
+        return () => {
+            window.removeEventListener('resize', resize);
+        }
     }
 
     function restoreElementFromInput(inputEl, originalText) {
@@ -789,19 +1031,12 @@
         newElement.textContent = originalText;
         newElement.className = inputEl.dataset.originalClassName;
 
-        newElement.style.border = '1px solid #0000';
-
-        const stylesToCopy = [
-            'font-family', 'font-size', 'font-weight', 'font-style', 'color',
-            'line-height', 'letter-spacing', 'text-transform', 'text-align',
-            'padding-top', 'padding-right', 'padding-bottom', 'padding-left', 'box-sizing',
-            'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-            'height'
-        ];
 
         stylesToCopy.forEach(prop => {
             newElement.style[prop] = computedStyle[prop];
         });
+
+        newElement.style.border = '1px solid #0000';
 
         inputEl.parentNode.replaceChild(newElement, inputEl);
     }

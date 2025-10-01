@@ -17,6 +17,7 @@ import (
 	"log/slog"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -312,25 +313,23 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 		// if there *is* exif, parse it
 		if err == nil {
 			tag, err := x.Get(exif.Orientation)
-			if err != nil {
-				return "", fmt.Errorf("failed to get orientation: %v", err)
-			}
+			if err == nil {
+				if tag.Count == 1 && tag.Format() == tiff.IntVal {
+					orientation, err := tag.Int(0)
+					if err != nil {
+						return "", fmt.Errorf("failed to get orientation: %v", err)
+					}
 
-			if tag.Count == 1 && tag.Format() == tiff.IntVal {
-				orientation, err := tag.Int(0)
-				if err != nil {
-					return "", fmt.Errorf("failed to get orientation: %v", err)
-				}
+					slog.Debug("Orientation tag found", "orientation", orientation)
 
-				slog.Debug("Orientation tag found", "orientation", orientation)
-
-				switch orientation {
-				case 3:
-					img = imaging.Rotate180(img)
-				case 6:
-					img = imaging.Rotate270(img)
-				case 8:
-					img = imaging.Rotate90(img)
+					switch orientation {
+					case 3:
+						img = imaging.Rotate180(img)
+					case 6:
+						img = imaging.Rotate270(img)
+					case 8:
+						img = imaging.Rotate90(img)
+					}
 				}
 			}
 		}
@@ -381,7 +380,7 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 		}
 	}
 
-	iconPath = "/uploads/" + fileName
+	iconPath = "/uploads/" + url.PathEscape(fileName)
 
 	return iconPath, nil
 }
