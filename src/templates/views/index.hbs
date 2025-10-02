@@ -80,9 +80,9 @@
                 alt="{{this.Name}}" src="{{this.Icon}}" />
             <h2 class="capitalize break-all">{{this.Name}}</h2>
         </div>
-        <div class="p-2.5 grid grid-cols-[repeat(auto-fill,_minmax(min(330px,_100%),_1fr))] gap-2">
-            {{#each this.Links}} <a href="{{this.URL}}" class="link-card" draggable="false" target="_blank"
-                rel="noopener noreferrer">
+        <div class="link-grid">
+            {{#each this.Links}}
+            <a href="{{this.URL}}" class="link-card" draggable="false" target="_blank" rel="noopener noreferrer">
                 <div data-img-container>
                     <img width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
                 </div>

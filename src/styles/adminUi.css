@@ -1,0 +1,70 @@
+.modal-bg {
+    visibility: hidden;
+    opacity: 0;
+}
+
+.modal-bg.is-visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+.modal {
+    opacity: 0;
+}
+
+.modal.is-visible {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .modal-bg {
+        visibility: hidden;
+        opacity: 0;
+
+        transition: opacity 0.3s ease, visibility 0s 0.3s;
+        transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    .modal-bg.is-visible {
+        visibility: visible;
+        opacity: 1;
+        transition-delay: 0s;
+    }
+
+    .modal {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    .modal.is-visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+        transition-delay: 0s;
+    }
+}
+
+.action-button {
+    display: flex;
+    width: fit-content;
+    height: fit-content;
+    padding: 0.25rem;
+    background-color: var(--color-highlight-sm);
+    border: 1px solid color-mix(in srgb, var(--color-highlight) 70%, #0000);
+    border-radius: 9999px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: filter 0.15s cubic-bezier(0.45, 0, 0.55, 1);
+    contain: layout style paint;
+
+    &:hover {
+        filter: brightness(125%);
+    }
+
+    &:active {
+        filter: brightness(95%);
+    }
+}

@@ -1,12 +1,11 @@
 @import "tailwindcss";
 
-
 @theme {
     --color-accent: oklch(57.93% 0.258 294.12);
     --color-success: oklch(70.19% 0.158 160.44);
     --color-error: oklch(53% 0.251 28.48);
 
-    --color-base: oklch(11% .007 285);
+    --color-base: oklch(11% 0.007 285);
     --color-surface: oklch(19% 0.007 285.66);
     --color-overlay: oklch(26% 0.008 285.66);
 
@@ -15,18 +14,21 @@
     --color-text: oklch(87% 0.015 286);
 
     --color-highlight-sm: oklch(30.67% 0.007 286);
-    --color-highlight: oklch(39.26% 0.010 286);
+    --color-highlight: oklch(39.26% 0.01 286);
     --color-highlight-lg: oklch(47.72% 0.011 286);
 }
 
 @font-face {
     font-family: "Instrument Sans";
-    src: url("/assets/fonts/InstrumentSans-VariableFont_wdth,wght.woff2") format("woff2");
+    src: url("/assets/fonts/InstrumentSans-VariableFont_wdth,wght.woff2")
+        format("woff2");
     font-display: swap;
 }
 
 :root {
-    --default-font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --default-font-family: "Instrument Sans", ui-sans-serif, system-ui,
+        sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
 }
 
 html {
@@ -35,25 +37,27 @@ html {
     color: var(--color-text);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    @apply font-semibold;
-}
+@layer base {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-weight: 600;
+    }
 
-h1 {
-    font-size: clamp(42px, 10vw, 64px);
-}
+    h1 {
+        font-size: clamp(42px, 10vw, 64px);
+    }
 
-h2 {
-    font-size: clamp(30px, 6vw, 36px);
-}
+    h2 {
+        font-size: clamp(30px, 6vw, 36px);
+    }
 
-h3 {
-    font-size: 1.25rem;
+    h3 {
+        font-size: 1.25rem;
+    }
 }
 
 button {
@@ -62,7 +66,7 @@ button {
 
 input:not(.search) {
     @apply px-4 py-2 rounded-md w-full bg-surface border border-highlight/70 placeholder:text-highlight text-text focus-visible:outline-none transition-colors duration-300 ease-out overflow-hidden;
-    
+
     &[type="file"] {
         @apply p-0 cursor-pointer;
 
@@ -88,7 +92,8 @@ input:not(.search) {
 
     &:not(.admin) {
         &:hover {
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+                0 4px 6px -4px rgb(0 0 0 / 0.1);
             transform: translateY(-4px);
         }
 
@@ -116,7 +121,7 @@ input:not(.search) {
 /* Div that holds the image */
 .link-card div[data-img-container] {
     flex-shrink: 0;
-    margin-right: 0.5rem;
+    padding-right: 0.5rem;
 }
 
 .link-card div[data-img-container] img {
@@ -128,13 +133,36 @@ input:not(.search) {
 
 /* Div that holds the text */
 .link-card div[data-text-container] {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    row-gap: 1px;
+    overflow: hidden;
     word-break: break-all;
 }
 
 .link-card div[data-text-container] p {
     color: var(--color-subtle);
+    white-space: pre-wrap;
+    border: 1px solid #0000;
+    min-height: 22px;
 }
 
+.new-link-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.625rem;
+    border: 0.125rem dashed var(--color-subtle);
+    border-radius: 1rem;
+    transition: box-shadow, transofrm 150ms cubic-bezier(0.45, 0, 0.55, 1);
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
 
 .categoy-header {
     display: flex;
@@ -156,4 +184,12 @@ input:not(.search) {
     word-break: break-all;
     border-width: 1px;
     border-color: #0000;
+}
+
+.link-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
+    gap: 0.5rem;
+    padding: 0.625rem;
+    contain: layout style paint;
 }

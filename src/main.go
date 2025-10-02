@@ -17,7 +17,6 @@ import (
 	"log/slog"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -27,9 +26,11 @@ import (
 	"time"
 
 	"github.com/HugoSmits86/nativewebp"
+	"github.com/NarmadaWeb/gonify/v3"
 	"github.com/caarlos0/env/v11"
 	"github.com/disintegration/imaging"
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/helmet"
 	"github.com/gofiber/fiber/v3/middleware/static"
 	"github.com/gofiber/template/handlebars/v2"
@@ -43,7 +44,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-//go:embed assets/** templates/** schema.sql
+//go:embed assets/** templates/** schema.sql scripts/**.js styles/**.css
 var embeddedAssets embed.FS
 
 var devContent = `<script>
@@ -278,7 +279,14 @@ func CropToCenter(img image.Image, outputSize int) (image.Image, error) {
 	return outputImg, nil
 }
 
-func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fiber.Ctx) (string, error) {
+func UploadFile(file *multipart.FileHeader, contentType string, c fiber.Ctx) (string, error) {
+	fileId, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+
+	fileName := fmt.Sprintf("%s.%s", fileId.String(), filepath.Ext(file.Filename))
+
 	srcFile, err := file.Open()
 	if err != nil {
 		return "", err
@@ -380,7 +388,7 @@ func UploadFile(file *multipart.FileHeader, fileName, contentType string, c fibe
 		}
 	}
 
-	iconPath = "/uploads/" + url.PathEscape(fileName)
+	iconPath = "/uploads/" + fileName
 
 	return iconPath, nil
 }
@@ -698,16 +706,23 @@ func main() {
 		log.Fatal(err)
 	}
 
-	css, err := fs.ReadFile(embeddedAssets, "assets/tailwind.css")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	engine := handlebars.NewFileSystem(http.FS(templatesDir), ".hbs")
 
-	engine.AddFunc("inlineCSS", func() string {
-		return string(css)
+	engine.AddFunc("embedFile", func(fileToEmbed string) string {
+		content, err := fs.ReadFile(embeddedAssets, fileToEmbed)
+		if err != nil {
+			return ""
+		}
+
+		fileExtension := filepath.Ext(fileToEmbed)
+		switch fileExtension {
+		case ".js":
+			return fmt.Sprintf("<script>%s</script>", content)
+		case ".css":
+			return fmt.Sprintf("<style>%s</style>", content)
+		default:
+			return string(content)
+		}
 	})
 
 	engine.AddFunc("devContent", func() string {
@@ -715,10 +730,6 @@ func main() {
 			return devContent
 		}
 		return ""
-	})
-
-	engine.AddFunc("eq", func(a, b any) bool {
-		return a == b
 	})
 
 	router := fiber.New(fiber.Config{
@@ -731,6 +742,17 @@ func main() {
 	router.Get("/favicon.ico", func(c fiber.Ctx) error {
 		return c.Redirect().To("/assets/favicon.ico")
 	})
+
+	router.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed,
+	}))
+
+	router.Use(gonify.New(gonify.Config{
+		MinifySVG:  !app.DevMode,
+		MinifyCSS:  !app.DevMode,
+		MinifyJS:   !app.DevMode,
+		MinifyHTML: !app.DevMode,
+	}))
 
 	router.Use("/", static.New("./public", static.Config{
 		Browse: false,
@@ -822,7 +844,7 @@ func main() {
 
 		return c.Render("views/admin/index", fiber.Map{
 			"Categories": app.CategoryManager.GetCategories(),
-		}, "layouts/main")
+		}, "layouts/admin")
 	})
 
 	api := router.Group("/api")
@@ -879,9 +901,7 @@ func main() {
 				})
 			}
 
-			filename := fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name[:min(10, len(req.Name))], " ", "_"))
-
-			iconPath, err := UploadFile(file, filename, contentType, c)
+			iconPath, err := UploadFile(file, contentType, c)
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"message": "Failed to upload file, please try again!",
@@ -974,9 +994,7 @@ func main() {
 				})
 			}
 
-			filename := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), strings.ReplaceAll(req.Name[:min(10, len(req.Name))], " ", "_"))
-
-			iconPath, err := UploadFile(file, filename, contentType, c)
+			iconPath, err := UploadFile(file, contentType, c)
 			if err != nil {
 				slog.Error("Failed to upload file", "error", err)
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -1068,9 +1086,7 @@ func main() {
 
 				oldIconPath := category.Icon
 
-				filename := fmt.Sprintf("%d_%s.svg", time.Now().Unix(), strings.ReplaceAll(req.Name[:min(10, len(req.Name))], " ", "_"))
-
-				iconPath, err := UploadFile(file, filename, contentType, c)
+				iconPath, err := UploadFile(file, contentType, c)
 				if err != nil {
 					slog.Error("Failed to upload file", "error", err)
 					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -1188,9 +1204,7 @@ func main() {
 
 				oldIconPath := link.Icon
 
-				filename := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), strings.ReplaceAll(req.Name[:min(10, len(req.Name))], " ", "_"))
-
-				iconPath, err := UploadFile(file, filename, contentType, c)
+				iconPath, err := UploadFile(file, contentType, c)
 				if err != nil {
 					slog.Error("Failed to upload file", "error", err)
 					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

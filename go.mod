@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/HugoSmits86/nativewebp v1.2.0
+	github.com/NarmadaWeb/gonify/v3 v3.0.0-beta
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/disintegration/imaging v1.6.2
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
@@ -19,6 +20,7 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/tdewolff/parse/v2 v2.8.3 // indirect
 	github.com/tinylib/msgp v1.4.0 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
@@ -44,6 +46,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/tdewolff/minify/v2 v2.24.3 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.66.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
