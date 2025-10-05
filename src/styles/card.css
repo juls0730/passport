@@ -1,0 +1,148 @@
+/* All css related to the card and category stuff */
+
+@layer components {
+    .link-grid > :is(a, div) {
+        display: flex;
+        flex-direction: row;
+        border-radius: calc(var(--spacing) * 4);
+        padding: calc(var(--spacing) * 2.5);
+        align-items: center;
+        transition-property: box-shadow, transform, translate;
+        transition-duration: 150ms;
+        transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+            0 2px 4px -2px rgb(0 0 0 / 0.1);
+        contain: layout style paint;
+
+        &:not(:is(div)) {
+            &:hover {
+                box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+                    0 4px 6px -4px rgb(0 0 0 / 0.1);
+                transform: translateY(-4px);
+            }
+
+            &:active {
+                box-shadow: 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                transform: translateY(2px);
+            }
+        }
+
+        &:not(.new-link-card) {
+            text-decoration: none;
+            background: var(--color-overlay);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .link-grid > :is(a, div) {
+            transition: none;
+
+            &:hover {
+                transform: none;
+            }
+
+            &:active {
+                transform: none;
+            }
+        }
+    }
+
+    /* Div that holds the image */
+    .link-grid > :is(a, div) > div:first-child {
+        position: relative;
+        flex-shrink: 0;
+        margin-right: calc(var(--spacing) * 2);
+        border-radius: calc(var(--spacing) * 2.5);
+        overflow: hidden;
+    }
+
+    .link-grid > :is(a, div) > div:first-child img {
+        user-select: none;
+        aspect-ratio: 1/1;
+        object-fit: cover;
+    }
+
+    /* Div that holds the text */
+    .link-grid > :is(a, div) > div:nth-child(2) {
+        display: flex;
+        flex-grow: 1;
+        flex-direction: column;
+        row-gap: 1px;
+        overflow: hidden;
+        word-break: break-all;
+    }
+
+    .link-grid > :is(a, div) > div:nth-child(2) h3 {
+        border: 1px solid transparent;
+    }
+
+    .link-grid > :is(a, div) > div:nth-child(2) p {
+        color: var(--color-subtle);
+        white-space: pre-wrap;
+        border: 1px solid #0000;
+        min-height: calc(1em + 0.5rem);
+        border: 1px solid transparent;
+        min-height: 26px;
+    }
+
+    .category-header {
+        display: flex;
+        align-items: center;
+    }
+
+    .category-header > div:first-child {
+        display: flex;
+        flex-shrink: 0;
+        position: relative;
+        margin-right: calc(var(--spacing) * 2);
+        align-items: center;
+        justify-content: center;
+        width: calc(var(--spacing) * 8);
+        height: calc(var(--spacing) * 8);
+        border-radius: calc(var(--spacing) * 1.5);
+        overflow: hidden;
+    }
+
+    .categoy-header > div:first-child img {
+        user-select: none;
+        object-fit: cover;
+        aspect-ratio: 1/1;
+    }
+
+    .category-header h2 {
+        text-transform: capitalize;
+        word-break: break-all;
+        border-width: 1px;
+        border-color: #0000;
+    }
+
+    .link-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
+        gap: calc(var(--spacing) * 2);
+        padding: calc(var(--spacing) * 2.5);
+        contain: layout style paint;
+    }
+
+    /* Empty state */
+    .link-grid > p {
+        color: var(--color-subtle);
+    }
+
+    .card-section {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .card-section > div {
+        width: 100%;
+        padding: calc(var(--spacing) * 2.5);
+    }
+
+    @media (min-width: 640px) {
+        .card-section > div {
+            width: 80%;
+        }
+    }
+}

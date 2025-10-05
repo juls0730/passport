@@ -10,6 +10,8 @@ on:
 
 jobs:
   build-and-push:
+    env:
+      RUNNER_TOOL_CACHE: /toolcache
     runs-on: ubuntu-latest
 
     permissions:

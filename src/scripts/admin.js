@@ -1,3 +1,5 @@
+"use strict";
+
 // idfk what this variable capitalization is, it's a mess
 let modalContainer = document.getElementById("modal-container");
 let modal = modalContainer.querySelector("div");
@@ -54,7 +56,7 @@ function addErrorListener(form) {
             event.target.parentElement
                 .querySelectorAll("[required]")
                 .forEach((el) => {
-                    el.classList.add("invalid:border-[#861024]!");
+                    el.classList.add("invalid");
                 });
         });
 }
@@ -83,7 +85,7 @@ function cloneEditActions(primaryActions) {
         let actionButtonObj = primaryActions[i];
 
         let actionButton = editActions.querySelector(
-            `div[data-primary-actions] button:nth-child(${i + 1})`
+            `div:first-child button:nth-child(${i + 1})`
         );
         actionButton.setAttribute("onclick", actionButtonObj.clickAction);
         actionButton.setAttribute("aria-label", actionButtonObj.label);
@@ -120,7 +122,7 @@ document
             newLinkCard.classList.add("link-card", "admin", "relative");
 
             let newLinkImgElement = newLinkCard.querySelector(
-                "div[data-img-container] img"
+                "div:first-child img"
             );
 
             newLinkImgElement.src = await processFile(data.get("icon"));
@@ -200,7 +202,7 @@ document
 
             categoryHeader.appendChild(editActions);
 
-            let categoryImg = categoryHeader.querySelector(".category-img");
+            let categoryImg = categoryHeader.querySelector("div:first-child");
 
             categoryImg.querySelector("img").src = await processFile(
                 data.get("icon")
@@ -336,11 +338,11 @@ function closeModal() {
             .getElementById(activeModal + "-form")
             .querySelectorAll("[required]")
             .forEach((el) => {
-                el.classList.remove("invalid:border-[#861024]!");
+                el.classList.remove("invalid");
             });
     }
 
-    targetCategoryID = null;
+    currentlyEditing = {};
 }
 
 /**
@@ -417,22 +419,23 @@ function cancelEdit() {
  * @param {HTMLElement} target The target element that was clicked
  */
 function editLink(target) {
-    let startTime = performance.now();
-
     // we do it in this dynamic way so that if we add a new link without refreshing the page, it still works
-    let linkEl = target.closest(".link-card");
+    let linkEl = target.closest("[data-card]");
     let linkID = parseInt(linkEl.id);
     let categoryID = parseInt(linkEl.parentElement.previousElementSibling.id);
 
-    if (currentlyEditing.linkID !== undefined) {
+    if (
+        currentlyEditing.linkID !== undefined ||
+        currentlyEditing.categoryID !== undefined
+    ) {
         // cancel the edit if it's already in progress
         cancelEdit();
     }
 
-    let linkImg = linkEl.querySelector("div[data-img-container] img");
-    let linkName = linkEl.querySelector("div[data-text-container] h3");
-    let linkDesc = linkEl.querySelector("div[data-text-container] p");
-    let editActions = linkEl.querySelector("[data-edit-actions]");
+    let linkImg = linkEl.querySelector("div:first-child img");
+    let linkName = linkEl.querySelector("div:nth-child(2) h3");
+    let linkDesc = linkEl.querySelector("div:nth-child(2) p");
+    let editActions = linkEl.querySelector("div:nth-child(3)");
 
     currentlyEditing = {
         type: "link",
@@ -453,8 +456,7 @@ function editLink(target) {
     teleportElement(selectIconButton, linkImg.parentElement);
     teleportElement(confirmActions, editActions);
 
-    editActions.querySelector("div[data-primary-actions]").style.display =
-        "none";
+    editActions.querySelector("div:first-child").style.display = "none";
 
     requestAnimationFrame(() => {
         currentlyEditing.cleanup = replaceWithResizableTextarea([
@@ -498,6 +500,7 @@ async function confirmLinkEdit() {
         formData.get("description") === null &&
         formData.get("icon") === null
     ) {
+        cancelEdit();
         return;
     }
 
@@ -527,14 +530,14 @@ function cancelLinkEdit(
     let linkEl = document.getElementById(`${currentlyEditing.linkID}_link`);
     let linkInput = linkEl.querySelector("textarea");
     let linkTextarea = linkInput.nextElementSibling;
-    let linkImg = linkEl.querySelector("div[data-img-container] img");
-    let editActions = linkEl.querySelector("[data-edit-actions]");
+    let linkImg = linkEl.querySelector("div:first-child img");
+    let editActions = linkEl.querySelector("div:nth-child(3)");
 
     if (currentlyEditing.icon !== undefined) {
         linkImg.src = currentlyEditing.icon;
     }
 
-    editActions.querySelector("div[data-primary-actions]").style.display = "";
+    editActions.querySelector("div:first-child").style.display = "";
 
     // teleport the teleported elements back to the body for literally safe keeping
     unteleportElement(selectIconButton);
@@ -557,7 +560,10 @@ function deleteLink(target) {
     let linkID = parseInt(linkEl.id);
     let categoryID = parseInt(linkEl.parentElement.previousElementSibling.id);
 
-    if (currentlyEditing.linkID !== undefined) {
+    if (
+        currentlyEditing.linkID !== undefined ||
+        currentlyEditing.categoryID !== undefined
+    ) {
         // cancel the edit if it's already in progress
         cancelEdit();
     }
@@ -596,14 +602,17 @@ function editCategory(target) {
     let categoryEl = target.closest(".category-header");
     let categoryID = parseInt(categoryEl.id);
 
-    if (currentlyEditing.linkID !== undefined) {
+    if (
+        currentlyEditing.linkID !== undefined ||
+        currentlyEditing.categoryID !== undefined
+    ) {
         // cancel the edit if it's already in progress
         cancelEdit();
     }
 
     let categoryName = categoryEl.querySelector("h2");
-    let categoryIcon = categoryEl.querySelector("div[data-img-container] img");
-    let editActions = categoryEl.querySelector("[data-edit-actions]");
+    let categoryIcon = categoryEl.querySelector("div:first-child img");
+    let editActions = categoryEl.querySelector("div:nth-child(3)");
 
     currentlyEditing = {
         type: "category",
@@ -622,8 +631,7 @@ function editCategory(target) {
     teleportElement(selectIconButton, categoryIcon.parentElement);
     teleportElement(confirmActions, editActions);
 
-    editActions.querySelector("div[data-primary-actions]").style.display =
-        "none";
+    editActions.querySelector("div:first-child").style.display = "none";
 
     requestAnimationFrame(() => {
         currentlyEditing.cleanup = replaceWithResizableTextarea([
@@ -659,6 +667,7 @@ async function confirmCategoryEdit() {
 
     // nothing to update
     if (formData.get("name") === null && formData.get("icon") === null) {
+        cancelEdit();
         return;
     }
 
@@ -686,8 +695,8 @@ function cancelCategoryEdit(text = currentlyEditing.originalText) {
     );
 
     let categoryInput = categoryEl.querySelector("textarea");
-    let categoryIcon = categoryEl.querySelector(".category-img img");
-    let editActions = categoryEl.querySelector("[data-edit-actions]");
+    let categoryIcon = categoryEl.querySelector("div:first-child img");
+    let editActions = categoryEl.querySelector("div:nth-child(3)");
 
     if (currentlyEditing.icon !== undefined) {
         categoryIcon.src = currentlyEditing.icon;
@@ -696,7 +705,7 @@ function cancelCategoryEdit(text = currentlyEditing.originalText) {
     unteleportElement(selectIconButton);
     unteleportElement(confirmActions);
 
-    editActions.querySelector("div[data-primary-actions]").style.display = "";
+    editActions.querySelector("div:first-child").style.display = "";
 
     restoreElementFromInput(categoryInput, text);
 
@@ -711,7 +720,10 @@ function cancelCategoryEdit(text = currentlyEditing.originalText) {
 function deleteCategory(target) {
     let categoryEl = target.closest(".category-header");
 
-    if (currentlyEditing.categoryID !== undefined) {
+    if (
+        currentlyEditing.categoryID !== undefined ||
+        currentlyEditing.linkID !== undefined
+    ) {
         // cancel the edit if it's already in progress
         cancelEdit();
     }
@@ -815,8 +827,14 @@ function replaceWithResizableTextarea(targetEls) {
         let maxWidth = parentBoundingRect.width - borderWidth;
         // take care of category headers specifically because the parent bounding box contains two other elements
         if (targetEl.tagName === "H2") {
+            let imageComputedStyle = window.getComputedStyle(
+                targetEl.previousElementSibling
+            );
+
             let imageWidth =
-                targetEl.previousElementSibling.getBoundingClientRect().width;
+                targetEl.previousElementSibling.getBoundingClientRect().width +
+                parseFloat(imageComputedStyle.marginLeft) +
+                parseFloat(imageComputedStyle.marginRight);
             let actionButtonWidth =
                 targetEl.nextElementSibling.getBoundingClientRect().width;
 
@@ -898,11 +916,12 @@ function replaceWithResizableTextarea(targetEls) {
     // step 3: batch writes
     let inputElements = [];
 
-    elsInitialStyles.forEach((elInfo) => {
+    elsInitialStyles.forEach((elInfo, i) => {
         const inputElement = document.createElement("textarea");
         inputElement.value = elInfo.originalText;
         inputElement.className = "resizable-input";
-        inputElement.placeholder = elInfo.targetEl.dataset.placeholder;
+        inputElement.placeholder =
+            i == 0 ? "Enter title..." : "Enter description...";
         inputElement.dataset.originalElementType = elInfo.targetEl.tagName;
         inputElement.dataset.originalClassName = elInfo.targetEl.className;
 
@@ -951,9 +970,15 @@ function replaceWithResizableTextarea(targetEls) {
 
         // is it maybe a bit of some math that doesnt entirely make sense to me? you bet. But does it work? Hell yeah it does
         if (inputElement.dataset.originalElementType === "H2") {
+            let imageComputedStyle = window.getComputedStyle(
+                inputElement.previousElementSibling
+            );
+
             let imageWidth =
                 inputElement.previousElementSibling.getBoundingClientRect()
-                    .width;
+                    .width +
+                imageComputedStyle.marginLeft +
+                imageComputedStyle.marginRight;
             let actionButtonWidth =
                 inputElement.nextElementSibling.getBoundingClientRect().width;
 

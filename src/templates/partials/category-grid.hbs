@@ -1,0 +1,111 @@
+<section class="card-section">
+    <div>
+        {{#each Categories}}
+        <div class="category-header" id="{{this.ID}}_category">
+            <div>
+                <img width="32" height="32" draggable="false" alt="{{this.Name}}" src="{{this.Icon}}" />
+            </div>
+            <h2 class="capitalize break-all">{{this.Name}}</h2>
+            {{#if IsAdmin}}
+            <div>
+                <div class="action-container">
+                    <button aria-label="Edit category" onclick="editCategory(this)" class="action-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                            <use href="#edit-icon" />
+                        </svg>
+                    </button>
+                    <button aria-label="Delete category" onclick="deleteCategory(this)"
+                        class="text-error action-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                            <use href="#trash-icon" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+        <div class="link-grid">
+            {{#each this.Links}}
+
+            {{#if IsAdmin}}<div data-card id="{{this.ID}}_link" {{else}} <a href="{{this.URL}}" draggable="false"
+                target="_blank" rel="noreferrer" {{/if}}>
+
+                <div>
+                    <img width="64" height="64" draggable="false" src="{{this.Icon}}" alt="{{this.Name}}" />
+                </div>
+                <div>
+                    <h3>{{this.Name}}</h3>
+                    <p>{{this.Description}}</p>
+                </div>
+                {{#if IsAdmin}}
+                <div>
+                    <div class="action-container">
+                        <button aria-label="Edit link" onclick="editLink(this)" class="action-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <use href="#edit-icon" />
+                            </svg>
+                        </button>
+                        <button aria-label="Delete link" onclick="deleteLink(this)" class="text-error action-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <use href="#trash-icon" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                {{/if}}
+
+                {{#if IsAdmin}}
+            </div {{else}} </a {{/if}}>
+
+            {{else}}
+            {{#unless IsAdmin}}
+            <p class="text-subtle">No links here, add one!</p>
+            {{/unless}}
+            {{/each}}
+
+            {{#if IsAdmin}}
+            <div onclick="openModal('link', {{this.ID}})" class="new-link-card link-card admin">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                        stroke-width="2" d="M12 5v14m-7-7h14" />
+                </svg>
+                <div>
+                    <h3>Add a link</h3>
+                </div>
+            </div>
+            {{/if }}
+        </div>
+        {{/each}}
+
+        {{#if IsAdmin}}
+        <div class="add-category-button" id="add-category-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 5v14m-7-7h14" />
+            </svg>
+            <h2 onclick="openModal('category')">
+                Add a new category
+            </h2>
+        </div>
+        {{/if}}
+    </div>
+</section>
+
+<!-- store the svg icons here so that they can be reused -->
+{{#if IsAdmin}}
+<div class="hidden">
+    <svg id="edit-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+        viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+            <path d="M7 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1" />
+            <path d="M20.385 6.585a2.1 2.1 0 0 0-2.97-2.97L9 12v3h3zM16 5l3 3" />
+        </g>
+    </svg>
+
+    <svg id="trash-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+        viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE -->
+        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+    </svg>
+</div>
+{{/if}}
