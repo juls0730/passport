@@ -1,20 +1,31 @@
-<main class="flex justify-center items-center h-screen relative bg-base">
-    <div class="flex bg-surface rounded-xl overflow-hidden">
-        <img src="/assets/leaves.webp" class="h-96 w-64 object-cover" />
-        <div class="flex flex-col p-4 text-center">
-            <h2 class="text-2xl">
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Passport</title>
+    <link rel="favicon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin="anonymous"
+        href="/assets/fonts/InstrumentSans-VariableFont_wdth,wght.woff2" />
+    {{{embedFile "assets/styles/login.css"}}}
+</head>
+
+<body>
+    <main class="login-container">
+        <img src="/assets/leaves.webp" />
+        <div>
+            <h2>
                 Login
             </h2>
-            <form action="/admin/login" method="post" class="flex flex-col gap-y-3 my-2">
+            <form action="/admin/login" method="post" class="login-form">
                 <input type="text" name="username" placeholder="Username" />
                 <input type="password" name="password" placeholder="Password" />
                 <button class="px-4 py-2 rounded-md w-full bg-accent text-white border-0" type="submit">Login</button>
             </form>
             <span id="message"></span>
         </div>
-    </div>
-</main>
-
+    </main>
+</body>
 <script>
     let message = document.getElementById("message");
     let form = document.querySelector("form");
@@ -43,3 +54,6 @@
         message.innerText = (await res.json()).message;
     });
 </script>
+{{{devContent}}}
+
+</html>

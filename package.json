@@ -1,0 +1,18 @@
+{
+  "name": "passport-css-compiler",
+  "private": true,
+  "description": "A manifest to acquire CLI tools for passport. Not a Node app, only required for compiling CSS.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "postcss src/styles/*.css !src/styles/base.css --dir src/assets/styles"
+  },
+  "devDependencies": {
+    "@fullhuman/postcss-purgecss": "^7.0.2",
+    "cssnano": "^7.1.1",
+    "postcss": "^8.4.35",
+    "postcss-cli": "^11.0.0",
+    "postcss-import": "^16.1.1",
+    "postcss-preset-env": "^10.4.0"
+  }
+}

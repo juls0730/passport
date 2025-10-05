@@ -10,16 +10,16 @@ Passport is a simple, fast, and lightweight web dashboard/new tab replacement.
 
 ### Prerequisites
 
-- [ZQDGR](https://github.com/juls0730/zqdgr)
-- [Go](https://go.dev/doc/install)
-- [sqlite3](https://www.sqlite.org/download.html)
-- [TailwdinCSS CLI](https://github.com/tailwindlabs/tailwindcss/releases/latest)
+-   [ZQDGR](https://github.com/juls0730/zqdgr)
+-   [Go](https://go.dev/doc/install)
+-   [sqlite3](https://www.sqlite.org/download.html)
+-   [TailwdinCSS CLI](https://github.com/tailwindlabs/tailwindcss/releases/latest)
 
 ## Usage
 
 ### Docker
 
-Passport is available as a Docker image via this repository. This is the recommended way to run Passport.
+Passport is available as a Docker image via this repository for both amd64 and arm64. This is the recommended way to run Passport.
 
 ```bash
 docker run -d --name passport -p 3000:3000 -v passport_data:/data -e PASSPORT_ADMIN_USERNAME=admin -e PASSPORT_ADMIN_PASSWORD=password ghcr.io/juls0730/passport:latest
@@ -35,9 +35,11 @@ If you want to build from source, you will need to install the dependencies firs
 # note entirely necessary, but strongly recommended
 go install github.com/juls0730/zqdgr@latest
 
-curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.13/tailwindcss-linux-x64
-chmod +x tailwindcss-linux-x64
-mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
+# install bun
+curl -fsSL https://bun.sh/install | bash
+
+# install css build deps
+bun install
 
 # you may also have to install sqlite3...
 ```

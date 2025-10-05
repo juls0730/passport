@@ -5,4 +5,7 @@ public
 zqdgr
 
 # compiled via go prepare
+src/assets/styles/*
 src/assets/tailwind.css
+
+node_modules

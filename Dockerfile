@@ -1,7 +1,9 @@
 FROM golang:1.25 AS builder
 
 # build dependencies
-RUN apt update && apt install -y upx
+RUN apt update && apt install -y upx unzip
+
+RUN curl -fsSL https://bun.com/install | BUN_INSTALL=/usr bash
 
 ARG TARGETARCH
 RUN set -eux; \
@@ -30,8 +32,9 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 
+RUN bun install
+
 RUN zqdgr build
-RUN upx passport
 
 # ---- Runtime Stage ----
 FROM gcr.io/distroless/static-debian12 AS runner

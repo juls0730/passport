@@ -1,0 +1,199 @@
+@layer reset, base, components, utilities;
+@font-face {
+    font-family: "Instrument Sans";
+    src: url("/assets/fonts/InstrumentSans-VariableFont_wdth,wght.woff2")
+        format("woff2");
+    font-display: swap;
+}
+
+@layer reset {
+    /*
+        Josh's Custom CSS Reset slightly Modified
+        https://www.joshwcomeau.com/css/custom-css-reset/
+    */
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    * {
+        border: 0 solid;
+        line-height: calc(1em + 0.5rem);
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        -webkit-font-smoothing: antialiased;
+    }
+
+    img,
+    picture,
+    video,
+    canvas,
+    svg {
+        display: block;
+        max-width: 100%;
+    }
+
+    input,
+    button,
+    textarea,
+    select {
+        font: inherit;
+    }
+
+    button {
+        cursor: pointer;
+    }
+
+    p,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        word-break: break-word;
+    }
+
+    p {
+        text-wrap: pretty;
+        hyphens: auto;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        text-wrap: balance;
+    }
+
+    a {
+        color: #fff;
+    }
+}
+
+@layer base {
+    :root {
+        --family-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+            "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+            "Noto Color Emoji";
+        --color-accent: oklch(57.93% 0.258 294.12);
+        --color-success: oklch(70.19% 0.158 160.44);
+        --color-error: oklch(53% 0.251 28.48);
+
+        --color-base: oklch(11% 0.007 285);
+        --color-surface: oklch(19% 0.007 285.66);
+        --color-overlay: oklch(26% 0.008 285.66);
+
+        --color-muted: oklch(63% 0.015 286);
+        --color-subtle: oklch(72% 0.015 286);
+        --color-text: oklch(87% 0.015 286);
+
+        --color-highlight-sm: oklch(30.67% 0.007 286);
+        --color-highlight: oklch(39.26% 0.01 286);
+        --color-highlight-lg: oklch(47.72% 0.011 286);
+
+        --spacing: 0.25rem;
+
+        --leading-condensed: normal;
+    }
+
+    html,
+    body {
+        font-family: var(--family-sans);
+        color-scheme: dark;
+        color: var(--color-text);
+        background-color: var(--color-surface);
+        min-height: 100vh;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: clamp(42px, 10vw, 64px);
+    }
+
+    h2 {
+        font-size: clamp(30px, 6vw, 36px);
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    input:not(.search) {
+        color: var(--color-text);
+        padding-inline: calc(var(--spacing) * 4);
+        padding-block: calc(var(--spacing) * 2);
+
+        border-radius: calc(var(--spacing) * 1.5);
+
+        width: 100%;
+        background-color: var(--color-surface);
+        border: 1px solid color-mix(in srgb, var(--color-highlight) 70%, #0000);
+
+        transition-property: color, border, background-color;
+        transition-duration: 300ms;
+        transition-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+
+        overflow: hidden;
+
+        &::placeholder {
+            font-style: italic;
+            color: var(--color-highlight);
+        }
+
+        &:focus-visible {
+            outline: none;
+        }
+
+        &[type="file"] {
+            padding: 0;
+            cursor: pointer;
+
+            &::file-selector-button {
+                border: 0px;
+                padding: calc(var(--spacing) * 2);
+                margin-right: var(--spacing);
+                background-color: var(--color-highlight);
+                color: var(--color-subtle);
+                cursor: pointer;
+            }
+        }
+    }
+}
+
+@layer utilities {
+    .flex {
+        display: flex;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .leading-condensed {
+        line-height: var(--leading-condensed);
+    }
+
+    .text-error {
+        color: var(--color-error);
+    }
+
+    .text-success {
+        color: var(--color-success);
+    }
+}

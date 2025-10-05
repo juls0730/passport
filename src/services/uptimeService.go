@@ -24,6 +24,7 @@ type UptimeRobotSite struct {
 	FriendlyName string `json:"friendly_name"`
 	Url          string `json:"url"`
 	Status       int    `json:"status"`
+	Up           bool   `json:"-"`
 }
 
 type UptimeManager struct {
@@ -102,6 +103,10 @@ func (u *UptimeManager) update() {
 	if err := json.Unmarshal(body, &monitors); err != nil {
 		fmt.Printf("Error parsing uptime data: %v\n", err)
 		return
+	}
+
+	for i, monitor := range monitors.Monitors {
+		monitors.Monitors[i].Up = monitor.Status == 2
 	}
 
 	u.mutex.Lock()

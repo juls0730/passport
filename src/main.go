@@ -1,4 +1,4 @@
-//go:generate tailwindcss -i styles/main.scss -o assets/tailwind.css --minify
+//go:generate bun run build
 
 package main
 
@@ -44,7 +44,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-//go:embed assets/** templates/** schema.sql scripts/**.js styles/**.css
+//go:embed assets/** templates/** schema.sql scripts/**.js
 var embeddedAssets embed.FS
 
 var devContent = `<script>
@@ -285,7 +285,12 @@ func UploadFile(file *multipart.FileHeader, contentType string, c fiber.Ctx) (st
 		return "", err
 	}
 
-	fileName := fmt.Sprintf("%s.%s", fileId.String(), filepath.Ext(file.Filename))
+	var fileName string
+	if filepath.Ext(file.Filename) != ".svg" {
+		fileName = fmt.Sprintf("%s.webp", fileId.String())
+	} else {
+		fileName = fmt.Sprintf("%s.svg", fileId.String())
+	}
 
 	srcFile, err := file.Open()
 	if err != nil {
@@ -305,6 +310,10 @@ func UploadFile(file *multipart.FileHeader, contentType string, c fiber.Ctx) (st
 		// does not fall through (my C brain was tripping over this)
 	default:
 		return "", errors.New("unsupported file type")
+	}
+
+	if err != nil {
+		return "", err
 	}
 
 	if contentType != "image/svg+xml" {
@@ -715,6 +724,7 @@ func main() {
 		}
 
 		fileExtension := filepath.Ext(fileToEmbed)
+
 		switch fileExtension {
 		case ".js":
 			return fmt.Sprintf("<script>%s</script>", content)
@@ -761,10 +771,13 @@ func main() {
 
 	router.Use("/assets", static.New("", static.Config{
 		FS:     assetsDir,
+		Browse: false,
 		MaxAge: 31536000,
 	}))
 
 	router.Get("/", func(c fiber.Ctx) error {
+		c.Response().Header.Set("Link", "</assets/fonts/InstrumentSans-VariableFont_wdth,wght.woff2>; rel=preload; as=font; type=font/woff2; crossorigin")
+
 		renderData := fiber.Map{
 			"SearchProviderURL": app.Config.SearchProvider.URL,
 			"SearchParam":       app.Config.SearchProvider.Query,
@@ -785,7 +798,7 @@ func main() {
 			renderData["UptimeData"] = app.UptimeManager.GetUptime()
 		}
 
-		return c.Render("views/index", renderData, "layouts/main")
+		return c.Render("views/index", renderData)
 	})
 
 	router.Use(middleware.AdminMiddleware(app.db))
@@ -795,7 +808,7 @@ func main() {
 			return c.Redirect().To("/admin")
 		}
 
-		return c.Render("views/admin/login", fiber.Map{}, "layouts/main")
+		return c.Render("views/admin/login", fiber.Map{})
 	})
 
 	router.Post("/admin/login", func(c fiber.Ctx) error {
@@ -844,7 +857,8 @@ func main() {
 
 		return c.Render("views/admin/index", fiber.Map{
 			"Categories": app.CategoryManager.GetCategories(),
-		}, "layouts/admin")
+			"IsAdmin":    true,
+		})
 	})
 
 	api := router.Group("/api")

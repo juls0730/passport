@@ -1,7 +1,6 @@
 <div id="category-contents" class="hidden">
     <h3>Create A category</h3>
-    <form id="category-form" action="/api/categories" method="post"
-        class="flex flex-col gap-y-3 my-2 [&>div]:flex [&>div]:flex-col [&>div]:gap-1">
+    <form id="category-form" action="/api/categories" method="post" class="modal-form">
         <div>
             <label for="categoryName">Name</label>
             <input required type="text" name="name" id="categoryName" maxlength="50" />
@@ -10,7 +9,7 @@
             <label for="linkIcon">Icon</label>
             <input type="file" name="icon" id="linkIcon" accept=".svg" required />
         </div>
-        <button class="px-4 py-2 rounded-md w-full bg-accent text-white border-0" type="submit">Create
+        <button type="submit">Create
             category</button>
     </form>
     <span id="category-message"></span>
