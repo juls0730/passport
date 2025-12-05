@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "^7.0.2",
+    "baseline-browser-mapping": "^2.9.2",
     "cssnano": "^7.1.1",
     "postcss": "^8.4.35",
     "postcss-cli": "^11.0.0",

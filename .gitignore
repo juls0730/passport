@@ -1,4 +1,5 @@
 passport
+passport-*
 .env
 passport.db*
 public

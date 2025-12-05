@@ -11,37 +11,12 @@ let activeModal = null;
 let teleportStorage = document.getElementById("teleport-storage");
 let confirmActions = document.getElementById("confirm-actions");
 let selectIconButton = document.getElementById("select-icon-button");
+let loadingSpinner = document.getElementById("template-loading-spinner");
 
 document.addEventListener("DOMContentLoaded", () => {
     modalContainer.classList.remove("hidden");
     modalContainer.classList.add("flex");
 });
-
-/**
- * Submits a form to the given URL
- * @param {Event} event - The event that triggered the function
- * @param {string} url - The URL to submit the form to
- * @param {"category" | "link"} target - The target to close the modal for
- * @returns {Promise<void>}
- */
-async function submitRequest(event, url, target) {
-    event.preventDefault();
-    let data = new FormData(event.target);
-
-    let res = await fetch(url, {
-        method: "POST",
-        body: data,
-    });
-
-    if (res.status === 201) {
-        closeModal(target);
-        document.getElementById(`${target}-form`).reset();
-        location.reload();
-    } else {
-        let json = await res.json();
-        document.getElementById(`${target}-message`).innerText = json.message;
-    }
-}
 
 /**
  * Adds an event listener for the given from to error check after the first submit
@@ -76,9 +51,7 @@ function addErrorListener(form) {
 function cloneEditActions(primaryActions) {
     let editActions = document
         .getElementById("template-edit-actions")
-        .cloneNode(true);
-    editActions.removeAttribute("id");
-    editActions.classList.remove("hidden");
+        .content.firstElementChild.cloneNode(true);
 
     let i = 0;
     for (i = 0; i < primaryActions.length; i++) {
@@ -94,6 +67,46 @@ function cloneEditActions(primaryActions) {
     return editActions;
 }
 
+function strToBase64(str) {
+    // TextEncoder: Always UTF8
+    const uint8Array = new TextEncoder().encode(str);
+    let binary = "";
+
+    for (let i = 0; i < uint8Array.length; ++i) {
+        binary += String.fromCharCode(uint8Array[i]);
+    }
+
+    return btoa(binary);
+}
+function base64ToStr(base64Str) {
+    return atob(base64Str);
+}
+
+/**
+ * Sets the edit actions to be loading
+ * @param {HTMLElement} confirmButton The confirm button to set to loading
+ */
+function setConfirmLoading(confirmButton) {
+    const originalContents = strToBase64(confirmButton.innerHTML);
+    const loadingContents = `${loadingSpinner.innerHTML}`;
+    confirmButton.disabled = true;
+    // disable the cancel button too
+    confirmButton.nextElementSibling.disabled = true;
+    confirmButton.dataset.originContents = originalContents;
+    confirmButton.innerHTML = loadingContents;
+}
+
+/**
+ * Clears the loading state of the confirm button
+ * @param {HTMLElement} confirmButton The confirm button to clear the loading state of
+ */
+function clearConfirmLoading(confirmButton) {
+    confirmButton.disabled = false;
+    confirmButton.nextElementSibling.disabled = false;
+    confirmButton.innerHTML = base64ToStr(confirmButton.dataset.originContents);
+    confirmButton.dataset.originContents = "";
+}
+
 addErrorListener("link");
 document
     .getElementById("link-form")
@@ -101,66 +114,77 @@ document
         event.preventDefault();
         let data = new FormData(event.target);
 
-        let res = await fetch(`/api/category/${targetCategoryID}/link`, {
+        const submitButton = event.target.querySelector("button");
+        let originalContents = submitButton.innerHTML;
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = `${loadingSpinner.innerHTML}<span>Adding link...</span>`;
+
+        await fetch(`/api/category/${targetCategoryID}/link`, {
             method: "POST",
             body: data,
-        });
+        })
+            .then(async (res) => {
+                let json = await res.json();
 
-        if (res.status === 201) {
-            let json = await res.json();
+                if (!res.ok) {
+                    throw new Error(json.message);
+                }
 
-            let category = document.getElementById(
-                `${targetCategoryID}_category`
-            );
-            let linkGrid = category.nextElementSibling;
+                let category = document.getElementById(
+                    `${targetCategoryID}_category`
+                );
+                let linkGrid = category.nextElementSibling;
 
-            let newLinkCard = document
-                .getElementById("template-link-card")
-                .cloneNode(true);
+                let newLinkCard = document
+                    .getElementById("template-link-card")
+                    .content.firstElementChild.cloneNode(true);
 
-            newLinkCard.classList.remove("hidden");
-            newLinkCard.classList.add("link-card", "admin", "relative");
+                let newLinkImgElement = newLinkCard.querySelector(
+                    "div:first-child img"
+                );
 
-            let newLinkImgElement = newLinkCard.querySelector(
-                "div:first-child img"
-            );
+                newLinkImgElement.src = await processFile(data.get("icon"));
+                newLinkImgElement.alt = data.get("name");
 
-            newLinkImgElement.src = await processFile(data.get("icon"));
-            newLinkImgElement.alt = data.get("name");
+                newLinkCard.querySelector("h3").textContent = data.get("name");
+                newLinkCard.querySelector("p").textContent =
+                    data.get("description");
 
-            newLinkCard.querySelector("h3").textContent = data.get("name");
-            newLinkCard.querySelector("p").textContent =
-                data.get("description");
+                newLinkCard.setAttribute("id", `${json.link.id}_link`);
 
-            newLinkCard.setAttribute("id", `${json.link.id}_link`);
+                let editActions = cloneEditActions([
+                    {
+                        clickAction: "editLink(this)",
+                        label: "Edit link",
+                    },
+                    {
+                        clickAction: "deleteLink(this)",
+                        label: "Delete link",
+                    },
+                ]);
 
-            let editActions = cloneEditActions([
-                {
-                    clickAction: "editLink(this)",
-                    label: "Edit link",
-                },
-                {
-                    clickAction: "deleteLink(this)",
-                    label: "Delete link",
-                },
-            ]);
+                editActions.classList.add("absolute", "right-1", "top-1");
 
-            editActions.classList.add("absolute", "right-1", "top-1");
+                newLinkCard.appendChild(editActions);
 
-            newLinkCard.appendChild(editActions);
+                // append the card as the second to last element
+                linkGrid.insertBefore(newLinkCard, linkGrid.lastElementChild);
+                closeModal("link");
 
-            // append the card as the second to last element
-            linkGrid.insertBefore(newLinkCard, linkGrid.lastElementChild);
-            closeModal("link");
-
-            // after the close animation plays
-            setTimeout(() => {
-                document.getElementById(`link-form`).reset();
-            }, 300);
-        } else {
-            let json = await res.json();
-            document.getElementById(`link-message`).innerText = json.message;
-        }
+                // after the close animation plays
+                setTimeout(() => {
+                    document.getElementById(`link-form`).reset();
+                    document.getElementById(`link-message`).innerText = "";
+                }, 300);
+            })
+            .catch((err) => {
+                document.getElementById(`link-message`).innerText = err.message;
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalContents;
+            });
     });
 
 addErrorListener("category");
@@ -170,74 +194,94 @@ document
         event.preventDefault();
         let data = new FormData(event.target);
 
-        let res = await fetch(`/api/category`, {
+        const submitButton = event.target.querySelector("button");
+        const originalContents = submitButton.innerHTML;
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = `${loadingSpinner.innerHTML}<span>Adding category...</span>`;
+
+        await fetch(`/api/category`, {
             method: "POST",
             body: data,
-        });
+        })
+            .then(async (res) => {
+                let json = await res.json();
 
-        if (res.status === 201) {
-            let json = await res.json();
+                if (!res.ok) {
+                    throw new Error(json.message);
+                }
 
-            let newCategory = document
-                .getElementById("template-category")
-                .cloneNode(true);
+                let newCategory = document
+                    .getElementById("template-category")
+                    .content.firstElementChild.cloneNode(true);
 
-            let linkGrid = newCategory.querySelector("div:nth-child(2)");
-            let categoryHeader = newCategory.querySelector(".category-header");
-            categoryHeader.setAttribute("id", `${json.category.id}_category`);
-            categoryHeader.querySelector("h2").textContent = json.category.name;
+                let linkGrid = newCategory.querySelector("div:nth-child(2)");
+                let categoryHeader =
+                    newCategory.querySelector(".category-header");
+                categoryHeader.setAttribute(
+                    "id",
+                    `${json.category.id}_category`
+                );
+                categoryHeader.querySelector("h2").textContent =
+                    json.category.name;
 
-            let editActions = cloneEditActions([
-                {
-                    clickAction: "editCategory(this)",
-                    label: "Edit category",
-                },
-                {
-                    clickAction: "deleteCategory(this)",
-                    label: "Delete category",
-                },
-            ]);
+                let editActions = cloneEditActions([
+                    {
+                        clickAction: "editCategory(this)",
+                        label: "Edit category",
+                    },
+                    {
+                        clickAction: "deleteCategory(this)",
+                        label: "Delete category",
+                    },
+                ]);
 
-            editActions.classList.add("pl-2");
+                editActions.classList.add("pl-2", "flex-shrink-0");
 
-            categoryHeader.appendChild(editActions);
+                categoryHeader.appendChild(editActions);
 
-            let categoryImg = categoryHeader.querySelector("div:first-child");
+                let categoryImg =
+                    categoryHeader.querySelector("div:first-child");
 
-            categoryImg.querySelector("img").src = await processFile(
-                data.get("icon")
-            );
-
-            linkGrid
-                .querySelector("div")
-                .setAttribute(
-                    "onclick",
-                    `openModal('link', ${json.category.id})`
+                categoryImg.querySelector("img").src = await processFile(
+                    data.get("icon")
                 );
 
-            let addCategoryButton = document.getElementById(
-                "add-category-button"
-            );
-            addCategoryButton.parentElement.insertBefore(
-                categoryHeader,
-                addCategoryButton
-            );
-            addCategoryButton.parentElement.insertBefore(
-                linkGrid,
-                addCategoryButton
-            );
+                linkGrid
+                    .querySelector("div")
+                    .setAttribute(
+                        "onclick",
+                        `openModal('link', ${json.category.id})`
+                    );
 
-            closeModal("category");
+                let addCategoryButton = document.getElementById(
+                    "add-category-button"
+                );
+                addCategoryButton.parentElement.insertBefore(
+                    categoryHeader,
+                    addCategoryButton
+                );
+                addCategoryButton.parentElement.insertBefore(
+                    linkGrid,
+                    addCategoryButton
+                );
 
-            // after the close animation plays
-            setTimeout(() => {
-                document.getElementById(`category-form`).reset();
-            }, 300);
-        } else {
-            let json = await res.json();
-            document.getElementById(`category-message`).innerText =
-                json.message;
-        }
+                closeModal("category");
+
+                // after the close animation plays
+                setTimeout(() => {
+                    document.getElementById(`category-form`).reset();
+                    document.getElementById(`category-message`).innerText = "";
+                }, 300);
+            })
+            .catch((err) => {
+                document.getElementById(`category-message`).innerText =
+                    err.message;
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalContents;
+            });
     });
 
 // when the background is clicked, close the modal
@@ -330,6 +374,9 @@ function closeModal() {
         document
             .getElementById(activeModal + "-contents")
             .classList.add("hidden");
+        if (document.getElementById(`${activeModal}-message`) !== null) {
+            document.getElementById(`${activeModal}-message`).innerText = "";
+        }
         activeModal = null;
     }, 300);
 
@@ -374,22 +421,37 @@ function unteleportElement(element) {
     teleportElement(element, teleportStorage);
 }
 
-function confirmEdit() {
+/**
+ * Confirms the edit
+ * @param {Event} ev The event that triggered the function
+ */
+async function confirmEdit(ev) {
     if (currentlyEditing.cleanup !== undefined) {
         // this function could be called via deleting something, which doesn't have a cleanup function
         currentlyEditing.cleanup();
     }
 
-    switch (currentlyEditing.type) {
-        case "link":
-            confirmLinkEdit();
-            break;
-        case "category":
-            confirmCategoryEdit();
-            break;
-        default:
-            console.error("Unknown currentlyEditing type");
-            break;
+    let confirmButton = ev.target.closest("button");
+
+    try {
+        setConfirmLoading(confirmButton);
+
+        switch (currentlyEditing.type) {
+            case "link":
+                await confirmLinkEdit();
+                break;
+            case "category":
+                await confirmCategoryEdit();
+                break;
+            default:
+                console.error("Unknown currentlyEditing type");
+                break;
+        }
+    } catch (err) {
+        // TODO: tell the user that something went wrong?
+        console.error(err);
+    } finally {
+        clearConfirmLoading(confirmButton);
     }
 }
 
@@ -450,7 +512,7 @@ function editLink(target) {
         throw new Error("failed to find link ID or category ID");
     }
 
-    iconUploadInput.accept = "image/*";
+    iconUploadInput.accept = "image/jpeg,image/png,image/webp,image/svg+xml";
     targetedImageElement = linkImg;
 
     teleportElement(selectIconButton, linkImg.parentElement);
@@ -470,6 +532,10 @@ function editLink(target) {
     });
 }
 
+/**
+ * Confirms the edit of the link
+ * @param {Event} ev The event that triggered the function
+ */
 async function confirmLinkEdit() {
     let linkEl = document.getElementById(`${currentlyEditing.linkID}_link`);
     let linkNameInput = linkEl.querySelector("textarea");
@@ -504,23 +570,19 @@ async function confirmLinkEdit() {
         return;
     }
 
-    let res = await fetch(
+    await fetch(
         `/api/category/${currentlyEditing.categoryID}/link/${currentlyEditing.linkID}`,
         {
             method: "PATCH",
             body: formData,
         }
-    );
-
-    if (res.status === 200) {
+    ).then(() => {
         iconUploadInput.value = "";
 
         currentlyEditing.icon = undefined;
         cancelLinkEdit(linkNameInput.value, linkDescInput.value);
         currentlyEditing = {};
-    } else {
-        console.error("Failed to edit category");
-    }
+    });
 }
 
 function cancelLinkEdit(
@@ -556,7 +618,7 @@ function cancelLinkEdit(
  */
 function deleteLink(target) {
     // we do it in this dynamic way so that if we add a new link without refreshing the page, it still works
-    let linkEl = target.closest(".link-card");
+    let linkEl = target.closest("[data-card]");
     let linkID = parseInt(linkEl.id);
     let categoryID = parseInt(linkEl.parentElement.previousElementSibling.id);
 
@@ -577,21 +639,47 @@ function deleteLink(target) {
     openModal("link-delete");
 }
 
-async function confirmDeleteLink() {
-    let res = await fetch(
+/**
+ * Confirms the deletion of the link
+ * @param {Event} ev The event that triggered the function
+ */
+async function confirmDeleteLink(ev) {
+    const originalContents = ev.target.innerHTML;
+    const deleteButton = ev.target;
+    const cancelButton = deleteButton.nextElementSibling;
+    deleteButton.disabled = true;
+    cancelButton.disabled = true;
+    deleteButton.innerHTML = `${loadingSpinner.innerHTML}<span>Deleting link...</span>`;
+
+    await fetch(
         `/api/category/${currentlyEditing.categoryID}/link/${currentlyEditing.linkID}`,
         {
             method: "DELETE",
         }
-    );
+    )
+        .then(async (res) => {
+            if (!res.ok) {
+                let json = await res.json();
+                throw new Error(json.message);
+            }
 
-    if (res.status === 200) {
-        let linkEl = document.getElementById(`${currentlyEditing.linkID}_link`);
-        linkEl.remove();
+            let linkEl = document.getElementById(
+                `${currentlyEditing.linkID}_link`
+            );
+            linkEl.remove();
 
-        closeModal();
-        currentlyEditing = {};
-    }
+            closeModal();
+            currentlyEditing = {};
+        })
+        .catch((err) => {
+            document.getElementById(`delete-link-message`).innerText =
+                err.message;
+        })
+        .finally(() => {
+            deleteButton.disabled = false;
+            cancelButton.disabled = false;
+            deleteButton.innerHTML = originalContents;
+        });
 }
 
 /**
@@ -671,12 +759,10 @@ async function confirmCategoryEdit() {
         return;
     }
 
-    let res = await fetch(`/api/category/${currentlyEditing.categoryID}`, {
+    await fetch(`/api/category/${currentlyEditing.categoryID}`, {
         method: "PATCH",
         body: formData,
-    });
-
-    if (res.status === 200) {
+    }).then(() => {
         iconUploadInput.value = "";
 
         currentlyEditing.icon = undefined;
@@ -684,9 +770,7 @@ async function confirmCategoryEdit() {
         cancelCategoryEdit(categoryInput.value);
 
         currentlyEditing = {};
-    } else {
-        console.error("Failed to edit category");
-    }
+    });
 }
 
 function cancelCategoryEdit(text = currentlyEditing.originalText) {
@@ -739,22 +823,42 @@ function deleteCategory(target) {
 }
 
 async function confirmDeleteCategory() {
-    let res = await fetch(`/api/category/${currentlyEditing.categoryID}`, {
+    const originalContents = ev.target.innerHTML;
+    const deleteButton = ev.target;
+    const cancelButton = deleteButton.nextElementSibling;
+    deleteButton.disabled = true;
+    cancelButton.disabled = true;
+    deleteButton.innerHTML = `${loadingSpinner.innerHTML}<span>Deleting category...</span>`;
+
+    await fetch(`/api/category/${currentlyEditing.categoryID}`, {
         method: "DELETE",
-    });
+    })
+        .then(async (res) => {
+            if (!res.ok) {
+                let json = await res.json();
+                throw new Error(json.message);
+            }
 
-    if (res.status === 200) {
-        let categoryEl = document.getElementById(
-            `${currentlyEditing.categoryID}_category`
-        );
-        // get the next element and remove it (its the link grid)
-        let nextEl = categoryEl.nextElementSibling;
-        nextEl.remove();
-        categoryEl.remove();
+            let categoryEl = document.getElementById(
+                `${currentlyEditing.categoryID}_category`
+            );
+            // get the next element and remove it (its the link grid)
+            let nextEl = categoryEl.nextElementSibling;
+            nextEl.remove();
+            categoryEl.remove();
 
-        closeModal();
-        currentlyEditing = {};
-    }
+            closeModal();
+            currentlyEditing = {};
+        })
+        .catch((err) => {
+            document.getElementById(`delete-category-message`).innerText =
+                err.message;
+        })
+        .finally(() => {
+            deleteButton.disabled = false;
+            cancelButton.disabled = false;
+            deleteButton.innerHTML = originalContents;
+        });
 }
 
 function roundToNearestHundredth(num) {
@@ -771,6 +875,7 @@ const stylesToCopy = [
     "letter-spacing",
     "text-transform",
     "text-align",
+    "text-wrap-style",
 ];
 
 let _textMeasuringSpan,
@@ -788,8 +893,6 @@ let _textMeasuringSpan,
  * @returns (() => void) A cleanup function to remove event listeners
  */
 function replaceWithResizableTextarea(targetEls) {
-    let startTime = performance.now();
-
     /**
      * @typedef {Object} TargetInfo
      * @property {HTMLElement} targetEl The element to replace.
@@ -824,7 +927,7 @@ function replaceWithResizableTextarea(targetEls) {
             parseFloat(computedStyle.borderTopWidth) +
             parseFloat(computedStyle.borderBottomWidth);
 
-        let maxWidth = parentBoundingRect.width - borderWidth;
+        let maxWidth = parentBoundingRect.width;
         // take care of category headers specifically because the parent bounding box contains two other elements
         if (targetEl.tagName === "H2") {
             let imageComputedStyle = window.getComputedStyle(
@@ -957,9 +1060,6 @@ function replaceWithResizableTextarea(targetEls) {
 
     function resize(inputElement, fill = false) {
         const currentInputComputedStyle = window.getComputedStyle(inputElement);
-        const currentInputBorderWidth =
-            parseFloat(currentInputComputedStyle.borderLeftWidth) +
-            parseFloat(currentInputComputedStyle.borderRightWidth);
 
         const currentParentElBoundingRectWidth =
             inputElement.parentElement.getBoundingClientRect().width;
@@ -977,14 +1077,13 @@ function replaceWithResizableTextarea(targetEls) {
             let imageWidth =
                 inputElement.previousElementSibling.getBoundingClientRect()
                     .width +
-                imageComputedStyle.marginLeft +
-                imageComputedStyle.marginRight;
+                parseFloat(imageComputedStyle.marginLeft) +
+                parseFloat(imageComputedStyle.marginRight);
             let actionButtonWidth =
                 inputElement.nextElementSibling.getBoundingClientRect().width;
 
             // the brain cells rub together and this vaguely makes sense to me I think but I cant explain it
-            maxWidth -= imageWidth + actionButtonWidth + caretBuffer;
-            maxWidth += currentInputBorderWidth;
+            maxWidth -= imageWidth + actionButtonWidth;
         }
 
         let currentContentWidth;
@@ -1017,9 +1116,7 @@ function replaceWithResizableTextarea(targetEls) {
                 _textMeasuringSpan.getBoundingClientRect().width;
 
             currentContentWidth = Math.min(
-                roundToNearestHundredth(
-                    measuredTextWidth + currentInputBorderWidth
-                ) + caretBuffer,
+                roundToNearestHundredth(measuredTextWidth) + caretBuffer,
                 maxWidth
             );
         } else {

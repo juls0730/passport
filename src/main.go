@@ -80,7 +80,15 @@ socket.addEventListener('message', (event) => {
 		setTimeout(testPage, 150);
 	}
 });
-</script>`
+</script>
+<style>
+html {
+	outline-color: yellow;
+	outline-width: 5px;
+	outline-style: dashed;
+	outline-offset: -5px;
+}
+</style>`
 
 var (
 	insertCategoryStmt *sql.Stmt
@@ -1011,8 +1019,13 @@ func main() {
 			iconPath, err := UploadFile(file, contentType, c)
 			if err != nil {
 				slog.Error("Failed to upload file", "error", err)
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"message": "Failed to upload file, please try again!",
+				status := fiber.StatusInternalServerError
+				if strings.Contains(err.Error(), "unsupported file type") {
+					status = fiber.StatusBadRequest
+				}
+
+				return c.Status(status).JSON(fiber.Map{
+					"message": "Failed to upload file: " + err.Error(),
 				})
 			}
 
@@ -1103,8 +1116,13 @@ func main() {
 				iconPath, err := UploadFile(file, contentType, c)
 				if err != nil {
 					slog.Error("Failed to upload file", "error", err)
-					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-						"message": "Failed to upload file, please try again!",
+					status := fiber.StatusInternalServerError
+					if strings.Contains(err.Error(), "unsupported file type") {
+						status = fiber.StatusBadRequest
+					}
+
+					return c.Status(status).JSON(fiber.Map{
+						"message": "Failed to upload file: " + err.Error(),
 					})
 				}
 
@@ -1221,8 +1239,13 @@ func main() {
 				iconPath, err := UploadFile(file, contentType, c)
 				if err != nil {
 					slog.Error("Failed to upload file", "error", err)
-					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-						"message": "Failed to upload file, please try again!",
+					status := fiber.StatusInternalServerError
+					if strings.Contains(err.Error(), "unsupported file type") {
+						status = fiber.StatusBadRequest
+					}
+
+					return c.Status(status).JSON(fiber.Map{
+						"message": "Failed to upload file: " + err.Error(),
 					})
 				}
 

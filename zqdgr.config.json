@@ -1,6 +1,6 @@
 {
     "name": "passport",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "description": "Passport is a simple, lightweight, and fast dashboard/new tab page for your browser.",
     "author": "juls0730",
     "license": "BSL-1.0",
@@ -11,7 +11,6 @@
     },
     "scripts": {
         "generate": "go generate ./src/",
-
         "dev": "zqdgr generate; PASSPORT_DEV_MODE=true go run src/main.go",
         "build": "zqdgr generate && go build -tags netgo,prod -ldflags=\"-w -s\" -o passport src/main.go && upx passport",
         "build:all": "zqdgr build && zqdgr build:arm64 && zqdgr build:amd64",
@@ -19,6 +18,8 @@
         "build:arm64": "zqdgr generate && GOOS=linux GOARCH=arm64 go build -tags netgo,prod -ldflags=\"-w -s\" -o passport-linux-arm64 src/main.go && upx passport-linux-arm64"
     },
     "pattern": "src/**/*.{go,hbs,css,js,svg,png,jpg,jpeg,webp,woff2,ico,webp}",
-    "excluded_files": ["src/assets/styles"],
+    "excluded_files": [
+        "src/assets/styles"
+    ],
     "shutdown_signal": "SIGINT"
 }
