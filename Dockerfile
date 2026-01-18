@@ -6,7 +6,7 @@ RUN apt update && apt install -y upx unzip
 RUN curl -fsSL https://bun.com/install | BUN_INSTALL=/usr bash
     
 
-RUN go install github.com/juls0730/zqdgr@latest
+RUN go install github.com/juls0730/zqdgr@v0.0.6-1
 
 WORKDIR /app
 
