@@ -10,10 +10,10 @@ Passport is a simple, fast, and lightweight web dashboard/new tab replacement.
 
 ### Prerequisites
 
--   [ZQDGR](https://github.com/juls0730/zqdgr)
--   [Go](https://go.dev/doc/install)
--   [sqlite3](https://www.sqlite.org/download.html)
--   [TailwdinCSS CLI](https://github.com/tailwindlabs/tailwindcss/releases/latest)
+- [ZQDGR](https://github.com/juls0730/zqdgr)
+- [Go](https://go.dev/doc/install)
+- [sqlite3](https://www.sqlite.org/download.html)
+- [TailwdinCSS CLI](https://github.com/tailwindlabs/tailwindcss/releases/latest)
 
 ## Usage
 
@@ -85,10 +85,11 @@ The weather integration is optional, and will be enabled automatically if you pr
 
 The uptime integration is optional, and will be enabled automatically if you provide an API key. The following only applies if you are using the UptimeRobot integration.
 
-| Environment Variable      | Description                                       | Required | Default |
-| ------------------------- | ------------------------------------------------- | -------- | ------- |
-| `PASSPORT_UPTIME_API_KEY` | The UptimeRobot API key                           | true     |         |
-| `UPTIME_UPDATE_INTERVAL`  | The interval in seconds to update the uptime data | false    | 300     |
+| Environment Variable      | Description                                                        | Required | Default     |
+| ------------------------- | ------------------------------------------------------------------ | -------- | ----------- |
+| `UPTIME_PROVIDER`         | The uptime provider to use, either `uptimerobot` or `betteruptime` | false    | uptimerobot |
+| `PASSPORT_UPTIME_API_KEY` | The UptimeRobot API key                                            | true     |             |
+| `UPTIME_UPDATE_INTERVAL`  | The interval in seconds to update the uptime data                  | false    | 300         |
 
 ### Adding links and categories
 
